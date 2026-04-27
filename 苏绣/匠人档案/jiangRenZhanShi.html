@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>匠人档案</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Source Han Sans CN', 'Noto Sans SC', Arial, sans-serif;
+            background-color: #F2F8F4;
+            color: #2F4B43;
+        }
+
+        .header {
+            text-align: center;
+            padding: 25px 20px;
+            background-color: #7EA08F;
+            color: #e8c95b;
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            box-shadow: 0 4px 8px rgba(47, 75, 67, 0.3);
+        }
+
+        .gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 给a标签添加样式，继承卡片效果 */
+       .item-link {
+            text-decoration: none;
+            flex: 1;
+            min-width: 250px;
+            max-width: 270px;
+            height: 600px;
+        }
+
+        .item {
+            position: relative;
+            background-color: #A9C3B2;
+            color: #2F4B43;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 8px rgba(47, 75, 67, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer; /* 鼠标悬浮变成小手，提示可点击 */
+        }
+
+        .item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(47, 75, 67, 0.3);
+        }
+
+        .item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+            display: block;
+        }
+
+        .item-text {
+            position: absolute;
+            top: 12%;
+            left: 50%;
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            z-index: 1;
+            transform: translate(-50%, -50%);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* 文字阴影，更清晰 */
+        }
+
+        .item-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+            margin: 0;
+        }
+
+        .item-label {
+            font-size: 18px;
+            margin-top: 5px;
+            color: #ffffff;
+            border-top: 1px solid #B89C68;
+            padding-top: 5px;
+            margin: 5px 0 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <span>▶</span> 匠人 ◆ 档案 <span>◀</span>
+    </div>
+    <div class="gallery">
+        <!-- 姚建萍 - 跳转链接 -->
+        <a class="item-link" href="yaojianping.html" target="_blank">
+            <div class="item">
+                <img src="image/yaojianping_pto.jpeg" alt="姚建萍">
+                <div class="item-text">
+                    <div class="item-title">苏绣皇后</div>
+                    <div class="item-label">姚建萍</div>
+                </div>
+            </div>
+        </a>
+
+        <a class="item-link" href="yaohuifen.html" target="_blank">
+            <div class="item">
+                <img src="image/yhf1.jpg" alt="姚惠芬">
+                <div class="item-text">
+                    <div class="item-title">中华巧女</div>
+                    <div class="item-label">姚惠芬</div>
+                </div>
+            </div>
+        </a>
+
+        <a class="item-link" href="zouyingzi.html" target="_blank">
+            <div class="item">
+                <img src="image/zyz2.jpeg" alt="邹英姿">
+                <div class="item-text">
+                    <div class="item-title">滴滴绣创始人</div>
+                    <div class="item-label">邹英姿</div>
+                </div>
+            </div>
+        </a>
+
+        <a class="item-link" href="liEying.html" target="_blank">
+            <div class="item">
+                <img src="image/liey1.jpg" alt="李娥瑛">
+                <div class="item-text">
+                    <div class="item-title">首批国家级苏绣传承人</div>
+                    <div class="item-label">李娥瑛</div>
+                </div>
+            </div>
+        </a>
+    </div>
+</body>
+
+</html>

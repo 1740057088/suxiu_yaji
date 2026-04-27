@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>苏绣雅集 · 针绣万象 活动速递</title>
+    <!-- Tailwind CSS v3 + Font Awesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* 苏绣雅集主题色系 */
+        :root {
+            --bg-green: #F2F8F4;
+            --text-dark: #2F4B43;
+            --suzhou-green: #7EA08F;
+            --suzhou-light: #A9C3B2;
+            --silk-gold: #B89C68;
+        }
+        body {
+            background-color: var(--bg-green);
+            color: var(--text-dark);
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            scroll-behavior: smooth;
+        }
+        .font-serif-cn {
+            font-family: 'Times New Roman', '宋体', 'Ma Shan Zheng', 'Noto Serif SC', serif;
+        }
+        .embroidery-pattern {
+            background-image: radial-gradient(circle at 10% 20%, rgba(184,156,104,0.08) 1.5px, transparent 1px);
+            background-size: 18px 18px;
+        }
+        .navbar-scrolled {
+            background-color: rgba(242, 248, 244, 0.92) !important;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        .btn-scale:active {
+            transform: scale(0.97);
+            transition: transform 0.1s;
+        }
+        /* 卡片悬停效果 */
+        .activity-card {
+            transition: all 0.3s ease;
+        }
+        .activity-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15);
+        }
+        .card-img {
+            transition: transform 0.4s ease;
+        }
+        .activity-card:hover .card-img {
+            transform: scale(1.05);
+            filter: brightness(1.02);
+        }
+        /* 标签样式 */
+        .tag-hot {
+            background: rgba(184, 156, 104, 0.9);
+            backdrop-filter: blur(2px);
+        }
+        .tag-upcoming {
+            background: rgba(47, 75, 67, 0.85);
+        }
+        /* 侧边栏抽屉 */
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: -380px;
+            width: 360px;
+            height: 100vh;
+            background: white;
+            box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .drawer.open {
+            right: 0;
+        }
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 999;
+            display: none;
+        }
+        .drawer-overlay.active {
+            display: block;
+        }
+        /* 订阅成功通知条 */
+        .toast-notify {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: #2F4B43;
+            color: #F2F8F4;
+            padding: 0.75rem 1.5rem;
+            border-radius: 40px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            z-index: 1100;
+            opacity: 0;
+            transition: all 0.25s ease;
+            pointer-events: none;
+            font-weight: 500;
+        }
+        .toast-notify.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        /* 模态框通用 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        .modal.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 32px;
+            max-width: 400px;
+            width: 90%;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+        }
+        /* 标签栏激活样式 */
+        .filter-tab {
+            transition: all 0.2s;
+        }
+        .filter-tab.active {
+            background-color: var(--silk-gold);
+            color: white;
+            border-color: var(--silk-gold);
+        }
+        /* 收藏/预约按钮状态 */
+        .btn-fav.active, .btn-book.active {
+            background-color: var(--silk-gold) !important;
+            color: white !important;
+            border-color: var(--silk-gold) !important;
+        }
+        .btn-fav.active i, .btn-book.active i {
+            color: white;
+        }
+    </style>
+</head>
+<body class="embroidery-pattern">
+
+    <!-- 顶部导航栏 -->
+    <header id="main-header" class="sticky top-0 z-50 bg-[#F2F8F4] transition-all duration-300 w-full border-b border-[#A9C3B2]">
+        <div class="container mx-auto px-4 md:px-8 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-feather-alt text-2xl" style="color: #B89C68;"></i>
+                <span class="font-serif-cn text-xl md:text-2xl font-semibold tracking-wide" style="color:#2F4B43;">苏绣雅集</span>
+                <span class="hidden md:inline-block text-xs ml-1 border-l pl-2 border-[#7EA08F] italic">绣蕴东方</span>
+            </div>
+            <nav class="hidden md:flex space-x-7 text-[#2F4B43] font-medium">
+<a href="../index/index.html" class="hover:text-[#B89C68] transition">首页</a>
+                <a href="shop.html" class="hover:text-[#B89C68] transition">作品展示</a>
+                <a href="#" class="hover:text-[#B89C68] transition">工艺百科</a>
+                <a href="#" class="hover:text-[#B89C68] transition">匠人档案</a>
+                <a href="shop.html" class="hover:text-[#B89C68] transition">珍藏商城</a>
+                <a href="activities.html" class="text-[#B89C68] border-b-2 border-[#B89C68] pb-1">有关动态</a>
+            </nav>
+            <div class="flex items-center space-x-3">
+                <div class="relative cursor-pointer group" id="userAvatarBtn">
+                    <div class="flex items-center gap-2 bg-white/60 px-3 py-1.5 rounded-full shadow-sm border border-[#A9C3B2]">
+                        <i class="fas fa-user-circle text-2xl text-[#B89C68]"></i>
+                        <span id="userDisplayName" class="text-sm font-medium">登录/注册</span>
+                        <i class="fas fa-chevron-down text-xs text-gray-500"></i>
+                    </div>
+                </div>
+                <a href="cart.html" class="relative">
+                    <i class="fas fa-shopping-bag text-xl cursor-pointer hover:text-[#B89C68] transition"></i>
+                    <span id="cart-badge" class="absolute -top-2 -right-3 bg-[#B89C68] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                </a>
+                <button id="mobile-menu-btn" class="md:hidden text-2xl focus:outline-none"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+        <div id="mobile-nav" class="hidden md:hidden bg-[#F2F8F4] border-t border-[#A9C3B2] flex-col p-4 space-y-2">
+      <a href="../index/index.html" class="block py-2">首页</a>
+            <a href="shop.html" class="block py-2">作品展示</a>
+            <a href="#" class="block py-2">工艺百科</a>
+            <a href="#" class="block py-2">匠人档案</a>
+            <a href="shop.html" class="block py-2">珍藏商城</a>
+            <a href="activities.html" class="block py-2 text-[#B89C68]">有关动态</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 md:py-12">
+        <!-- 顶部标题区 - 针绣万象・活动速递 -->
+        <div class="text-center mb-10">
+            <h1 class="font-serif-cn text-4xl md:text-5xl text-[#2F4B43] tracking-wide">针绣万象 · 活动速递</h1>
+            <p class="text-[#7EA08F] text-sm italic tracking-wide mt-2">一针一线 · 绣见万象</p>
+        </div>
+
+        <!-- 订阅模块 - 手机号 + 信封图标 -->
+        <div class="bg-white/60 backdrop-blur-sm rounded-2xl p-5 md:p-6 shadow-sm mb-10 flex flex-col md:flex-row justify-between items-center gap-4 border border-[#A9C3B2]">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-envelope-open-text text-2xl text-[#B89C68]"></i>
+                <span class="font-serif-cn text-xl font-medium">订阅工艺动态</span>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <input type="tel" id="subscribePhone" placeholder="输入手机号码" class="px-4 py-2 rounded-full border border-[#A9C3B2] bg-white/80 w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-[#B89C68]">
+                <button id="subscribeBtn" class="bg-transparent border-2 border-[#7EA08F] text-[#2F4B43] hover:bg-[#7EA08F] hover:text-white transition px-6 py-2 rounded-full font-medium btn-scale">订阅更新</button>
+            </div>
+        </div>
+
+        <!-- 分类标签栏 - 居中显示 -->
+        <div class="flex flex-wrap gap-3 mb-8 pb-3 justify-center">
+            <button data-filter="all" class="filter-tab active px-5 py-2 rounded-full text-sm font-medium border transition bg-[#B89C68] text-white border-[#B89C68]">全部</button>
+            <button data-filter="workshop" class="filter-tab px-5 py-2 rounded-full text-sm font-medium border border-[#A9C3B2] bg-white text-[#2F4B43] hover:bg-[#A9C3B2]">全年应展</button>
+            <button data-filter="exhibition" class="filter-tab px-5 py-2 rounded-full text-sm font-medium border border-[#A9C3B2] bg-white text-[#2F4B43] hover:bg-[#A9C3B2]">精品特展</button>
+            <button data-filter="academic" class="filter-tab px-5 py-2 rounded-full text-sm font-medium border border-[#A9C3B2] bg-white text-[#2F4B43] hover:bg-[#A9C3B2]">展览预告</button>
+        </div>
+
+        <!-- 活动卡片网格 -->
+        <div id="activitiesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7"></div>
+    </main>
+
+    <!-- 右侧抽屉 (我的收藏/预约) -->
+    <div id="drawerOverlay" class="drawer-overlay"></div>
+    <div id="userDrawer" class="drawer">
+        <div class="p-5 border-b border-[#A9C3B2] flex justify-between items-center">
+            <h3 class="font-serif-cn text-xl"><i class="fas fa-user-circle mr-2 text-[#B89C68]"></i> 个人中心</h3>
+            <button id="closeDrawerBtn" class="text-gray-400 hover:text-gray-700"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="p-5">
+            <div class="mb-6">
+                <div class="flex items-center justify-between"><span class="font-semibold"><i class="fas fa-heart text-red-500 mr-2"></i>我的收藏</span><button id="clearFavSidebar" class="text-xs text-gray-400">清空</button></div>
+                <ul id="favListSidebar" class="mt-2 space-y-2 text-sm max-h-40 overflow-y-auto"></ul>
+            </div>
+            <div>
+                <div class="flex items-center justify-between"><span class="font-semibold"><i class="fas fa-calendar-check text-[#B89C68] mr-2"></i>我的预约</span><button id="clearBookSidebar" class="text-xs text-gray-400">清空</button></div>
+                <ul id="bookListSidebar" class="mt-2 space-y-2 text-sm max-h-40 overflow-y-auto"></ul>
+            </div>
+            <button id="logoutSidebarBtn" class="mt-6 w-full border-t pt-4 text-left text-red-600 hover:text-red-800"><i class="fas fa-sign-out-alt mr-2"></i>退出登录</button>
+        </div>
+    </div>
+
+    <!-- 验证码弹窗 -->
+    <div id="codeModal" class="modal">
+        <div class="modal-content">
+            <i class="fas fa-mobile-alt text-3xl text-[#B89C68] mb-2"></i>
+            <h3 class="text-xl font-semibold">验证手机号</h3>
+            <p class="text-gray-500 text-sm mt-1">请输入您收到的短信验证码</p>
+            <input type="text" id="verificationCode" placeholder="验证码" class="mt-4 w-full border rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#B89C68]">
+            <div class="flex gap-3 mt-5">
+                <button id="modalConfirmBtn" class="flex-1 bg-[#7EA08F] text-white py-2 rounded-full">确认</button>
+                <button id="modalCloseBtn" class="flex-1 border border-gray-300 py-2 rounded-full">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 登录/注册弹窗 -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <i class="fas fa-user-circle text-4xl text-[#B89C68] mb-3"></i>
+            <h3 class="text-xl font-semibold">登录 / 注册</h3>
+            <p class="text-gray-500 text-sm mt-1">使用手机号或邮箱登录</p>
+            <input type="text" id="loginAccount" placeholder="手机号 / 邮箱" class="mt-4 w-full border rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#B89C68]">
+            <input type="password" id="loginPassword" placeholder="密码" class="mt-3 w-full border rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#B89C68]">
+            <div class="flex gap-3 mt-5">
+                <button id="loginConfirmBtn" class="flex-1 bg-[#7EA08F] text-white py-2 rounded-full">登录</button>
+                <button id="loginRegisterBtn" class="flex-1 border border-[#B89C68] text-[#B89C68] py-2 rounded-full">注册新账号</button>
+            </div>
+            <button id="loginCloseBtn" class="mt-3 text-xs text-gray-400 w-full">取消</button>
+        </div>
+    </div>
+
+    <!-- 注册弹窗 -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <i class="fas fa-pen-alt text-3xl text-[#B89C68] mb-2"></i>
+            <h3 class="text-xl font-semibold">注册新账号</h3>
+            <input type="text" id="regName" placeholder="昵称" class="mt-4 w-full border rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#B89C68]">
+            <input type="tel" id="regPhone" placeholder="手机号码" class="mt-3 w-full border rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#B89C68]">
+            <input type="password" id="regPassword" placeholder="密码" class="mt-3 w-full border rounded-full px-4 py-2 focus:outline-none focus:ring-1 focus:ring-[#B89C68]">
+            <div class="flex gap-3 mt-5">
+                <button id="registerSubmitBtn" class="flex-1 bg-[#7EA08F] text-white py-2 rounded-full">注册</button>
+                <button id="registerBackBtn" class="flex-1 border border-gray-300 py-2 rounded-full">返回</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全局提示条 -->
+    <div id="globalToast" class="toast-notify"><i class="fas fa-check-circle mr-2"></i><span></span></div>
+
+    <script>
+        // ---------- 正经登录系统 (localStorage 存储用户) ----------
+        let currentUser = JSON.parse(localStorage.getItem('suxiu_current_user')) || null;
+        let favorites = JSON.parse(localStorage.getItem('suxiu_favorites')) || [];
+        let bookings = JSON.parse(localStorage.getItem('suxiu_bookings')) || [];
+
+        
+        // 活动数据
+        const activitiesData = [
+            { id: 1, title: "繁花竞放—山花奖获奖者作品展", date: "2026.04.04 - 2026.05.25", location: "桃花坞美术馆", type: "exhibition", tag: "热门展览", img: "./苏绣/山花奖.jpeg", tagClass: "tag-upcoming", icon: "🔥" , url: "https://www.toutiao.com/article/7624742750725898798/?&source=m_redirect&wid=1775716137725"},
+            { id: 2, title: "“最忆江南”苏工苏作精品展", date: "2026.03.30 - 2026.05.20", location: "桃花坞美术馆", type: "exhibition", tag: "热门展览", img: "./苏绣/最忆江南.jpg", tagClass: "tag-upcoming", icon: "🔥" , url: "https://www.163.com/dy/article/KPCETRCK053469KC.html"},
+            { id: 3, title: "第六届中国工艺美术博览会（CACE）", date: "2026.05.29 - 2026.06.01", location: "福州海峡国际会展中心", type: "academic", tag: "即将开始", img: "./苏绣/博览会.webp", tagClass: "tag-upcoming", icon: "🕒" , url: "http://cace.cnlic.org.cn/"},
+            { id: 4, title: "苏州织造", date: "2026.03.24 - 2026.06.21", location: "苏州博物馆地下一层特展厅、二层书画厅", type: "exhibition", tag: "热门展览", img: "./苏绣/苏州织造.jpg", tagClass: "tag-upcoming", icon: "🔥" , url: "https://www.szmuseum.com/Exhibition/TemporaryDetails/459432ea-c6e5-45d7-9f38-8ef6503ccfb4?startYear=2026-03-23"},
+            { id: 5, title: "姚建萍刺绣艺术品牌馆（李公堤）", date: "周二-周日 10：00 - 18：00", location: "苏州工业园区李公堤三期5号楼102号", type: "workshop", tag: "全年应展", img: "./苏绣/姚建萍馆.jpg", tagClass: "tag-upcoming", icon: "📅" , url: "https://hk.trip.com/travel-guide/attraction/suzhou/yaojianping-cixiu-art-museum-15159034/"},
+            { id: 6, title: "中国刺绣艺术馆", date: "周一-周日9：00—16:30 （16:00 停止入馆）", location: "江苏省苏州市高新区镇湖街道绣馆街1号", type: "workshop", tag: "全年应展", img: "./苏绣/刺绣馆.webp", tagClass: "tag-upcoming", icon: "📅" , url: "https://baike.baidu.com/item/%E4%B8%AD%E5%9B%BD%E5%88%BA%E7%BB%A3%E8%89%BA%E6%9C%AF%E9%A6%86/6488651"}
+        ];
+
+        let currentFilter = "all";
+
+        function renderCards() {
+            const container = document.getElementById('activitiesGrid');
+            let filtered = activitiesData.filter(item => currentFilter === "all" ? true : item.type === currentFilter);
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-500">✨ 暂无相关动态 ✨</div>';
+                return;
+            }
+            container.innerHTML = filtered.map(act => {
+                const isFaved = currentUser && favorites.includes(act.id);
+                const isBooked = currentUser && bookings.includes(act.id);
+                return `
+                    <div class="activity-card bg-white/90 rounded-2xl overflow-hidden shadow-md transition-all border border-[#A9C3B2]">
+                        <div class="relative h-52 overflow-hidden bg-[#F2F8F4]">
+                          <a href="${act.url || '#'}" target="_blank" class="block w-full h-full">
+                              <img src="${act.img}" class="card-img w-full h-full object-contain transition-transform duration-300">
+                              <div class="absolute top-3 left-3 z-10">
+                                  <span class="${act.tagClass} text-white text-xs px-3 py-1 rounded-full font-medium shadow flex items-center gap-1"><span>${act.icon}</span> ${act.tag}</span>
+                              </div>
+                          </a>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-bold text-lg text-[#2F4B43] line-clamp-1">${act.title}</h3>
+                            <div class="flex items-center gap-2 text-sm text-gray-500 mt-1"><i class="far fa-calendar-alt"></i> ${act.date}</div>
+                            <div class="flex items-center gap-2 text-sm text-gray-500 mt-0.5"><i class="fas fa-map-marker-alt"></i> ${act.location}</div>
+                            <div class="flex gap-3 mt-4">
+                                <button data-id="${act.id}" data-type="fav" class="btn-fav flex-1 flex items-center justify-center gap-1 py-2 rounded-full border ${isFaved ? 'active bg-[#B89C68] text-white border-[#B89C68]' : 'border-[#A9C3B2] text-[#2F4B43] hover:bg-[#A9C3B2]'} transition"><i class="fa-${isFaved ? 'solid' : 'regular'} fa-heart"></i> ${isFaved ? '已收藏' : '收藏'}</button>
+                                <button data-id="${act.id}" data-type="book" class="btn-book flex-1 flex items-center justify-center gap-1 py-2 rounded-full border ${isBooked ? 'active bg-[#B89C68] text-white border-[#B89C68]' : 'border-[#A9C3B2] text-[#2F4B43] hover:bg-[#A9C3B2]'} transition"><i class="fa-${isBooked ? 'solid' : 'regular'} fa-calendar-check"></i> ${isBooked ? '已预约' : '预约'}</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            attachCardEvents();
+        }
+
+        function attachCardEvents() {
+            document.querySelectorAll('.btn-fav').forEach(btn => btn.addEventListener('click', () => handleFav(parseInt(btn.dataset.id))));
+            document.querySelectorAll('.btn-book').forEach(btn => btn.addEventListener('click', () => handleBook(parseInt(btn.dataset.id))));
+        }
+
+        function handleFav(id) {
+            if (!currentUser) { showLoginModal(); return; }
+            if (favorites.includes(id)) {
+                favorites = favorites.filter(f => f !== id);
+                showToast("已取消收藏");
+            } else {
+                favorites.push(id);
+                showToast("收藏成功！");
+            }
+            localStorage.setItem('suxiu_favorites', JSON.stringify(favorites));
+            renderCards();
+            updateSidebarLists();
+        }
+
+        function handleBook(id) {
+            if (!currentUser) { showLoginModal(); return; }
+            if (bookings.includes(id)) {
+                bookings = bookings.filter(b => b !== id);
+                showToast("已取消预约");
+            } else {
+                bookings.push(id);
+                showToast("预约成功！");
+            }
+            localStorage.setItem('suxiu_bookings', JSON.stringify(bookings));
+            renderCards();
+            updateSidebarLists();
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('globalToast');
+            toast.querySelector('span').innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // 登录/注册逻辑
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.add('active');
+        }
+
+        function closeLoginModal() { document.getElementById('loginModal').classList.remove('active'); }
+        function closeRegisterModal() { document.getElementById('registerModal').classList.remove('active'); }
+        function showRegisterModal() { closeLoginModal(); document.getElementById('registerModal').classList.add('active'); }
+
+        function doLogin() {
+            const account = document.getElementById('loginAccount').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            if (!account || !password) { showToast("请填写账号和密码"); return; }
+            const users = JSON.parse(localStorage.getItem('suxiu_users')) || [];
+            const user = users.find(u => (u.email === account || u.phone === account) && u.password === password);
+            if (user) {
+                currentUser = { id: user.id, name: user.name, email: user.email, phone: user.phone, isLogin: true };
+                localStorage.setItem('suxiu_current_user', JSON.stringify(currentUser));
+                favorites = JSON.parse(localStorage.getItem(`suxiu_favorites_${user.id}`)) || [];
+                bookings = JSON.parse(localStorage.getItem(`suxiu_bookings_${user.id}`)) || [];
+                localStorage.setItem('suxiu_favorites', JSON.stringify(favorites));
+                localStorage.setItem('suxiu_bookings', JSON.stringify(bookings));
+                updateUIByLogin();
+                closeLoginModal();
+                renderCards();
+                updateSidebarLists();
+                showToast(`欢迎回来，${user.name}`);
+                document.getElementById('loginAccount').value = '';
+                document.getElementById('loginPassword').value = '';
+            } else {
+                showToast("账号或密码错误");
+            }
+        }
+
+        function doRegister() {
+            const name = document.getElementById('regName').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            if (!name || !phone || !password) { showToast("请填写完整信息"); return; }
+            const phoneRegex = /^1[3-9]\d{9}$/;
+            if (!phoneRegex.test(phone)) { showToast("请输入有效的手机号码"); return; }
+            const users = JSON.parse(localStorage.getItem('suxiu_users')) || [];
+            if (users.find(u => u.phone === phone)) { showToast("该手机号已注册"); return; }
+            const newId = Date.now();
+            const newUser = { id: newId, name, phone, password };
+            users.push(newUser);
+            localStorage.setItem('suxiu_users', JSON.stringify(users));
+            currentUser = { id: newId, name, phone, isLogin: true };
+            localStorage.setItem('suxiu_current_user', JSON.stringify(currentUser));
+            favorites = [];
+            bookings = [];
+            localStorage.setItem('suxiu_favorites', JSON.stringify(favorites));
+            localStorage.setItem('suxiu_bookings', JSON.stringify(bookings));
+            updateUIByLogin();
+            closeRegisterModal();
+            renderCards();
+            updateSidebarLists();
+            showToast(`注册成功，欢迎 ${name}`);
+            document.getElementById('regName').value = '';
+            document.getElementById('regPhone').value = '';
+            document.getElementById('regPassword').value = '';
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('suxiu_current_user');
+            favorites = [];
+            bookings = [];
+            localStorage.setItem('suxiu_favorites', JSON.stringify(favorites));
+            localStorage.setItem('suxiu_bookings', JSON.stringify(bookings));
+            updateUIByLogin();
+            renderCards();
+            updateSidebarLists();
+            showToast("已退出登录");
+        }
+
+        function updateUIByLogin() {
+            const userNameSpan = document.getElementById('userDisplayName');
+            if (currentUser) userNameSpan.innerText = currentUser.name;
+            else userNameSpan.innerText = '登录/注册';
+            updateSidebarLists();
+        }
+
+        function updateSidebarLists() {
+            const favUl = document.getElementById('favListSidebar');
+            const bookUl = document.getElementById('bookListSidebar');
+            if (!favUl) return;
+            if (!currentUser) {
+                favUl.innerHTML = '<li class="text-gray-400 text-center">请先登录</li>';
+                bookUl.innerHTML = '<li class="text-gray-400 text-center">请先登录</li>';
+                return;
+            }
+            const favItems = activitiesData.filter(a => favorites.includes(a.id));
+            const bookItems = activitiesData.filter(a => bookings.includes(a.id));
+            favUl.innerHTML = favItems.map(item => `<li class="flex justify-between items-center border-b pb-1"><span class="truncate">${item.title}</span><button data-id="${item.id}" data-type="fav" class="text-red-400 text-xs remove-side-item"><i class="fas fa-trash-alt"></i></button></li>`).join('');
+            bookUl.innerHTML = bookItems.map(item => `<li class="flex justify-between items-center border-b pb-1"><span class="truncate">${item.title}</span><button data-id="${item.id}" data-type="book" class="text-gray-400 text-xs remove-side-item"><i class="fas fa-trash-alt"></i></button></li>`).join('');
+            document.querySelectorAll('.remove-side-item').forEach(btn => {
+                btn.onclick = () => {
+                    const id = parseInt(btn.dataset.id);
+                    const type = btn.dataset.type;
+                    if (type === 'fav') { favorites = favorites.filter(f => f !== id); localStorage.setItem(`suxiu_favorites_${currentUser.id}`, JSON.stringify(favorites)); localStorage.setItem('suxiu_favorites', JSON.stringify(favorites)); }
+                    else { bookings = bookings.filter(b => b !== id); localStorage.setItem(`suxiu_bookings_${currentUser.id}`, JSON.stringify(bookings)); localStorage.setItem('suxiu_bookings', JSON.stringify(bookings)); }
+                    renderCards();
+                    updateSidebarLists();
+                    showToast("已移除");
+                };
+            });
+        }
+
+        // 订阅流程 - 手机号验证
+        function subscribeFlow() {
+            const phone = document.getElementById('subscribePhone').value.trim();
+            const phoneRegex = /^1[3-9]\d{9}$/;
+            if (!phoneRegex.test(phone)) { showToast("请输入有效的手机号码"); return; }
+            showToast("验证码已发送至您的手机");
+            const modal = document.getElementById('codeModal');
+            modal.classList.add('active');
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            const closeModal = () => modal.classList.remove('active');
+            const onConfirm = () => {
+                const code = document.getElementById('verificationCode').value.trim();
+                if (code === "") { showToast("请输入验证码"); return; }
+                closeModal();
+                showToast("订阅成功！您已开启工艺动态推送");
+                document.getElementById('subscribePhone').value = '';
+                document.getElementById('verificationCode').value = '';
+                confirmBtn.removeEventListener('click', onConfirm);
+            };
+            confirmBtn.onclick = onConfirm;
+            document.getElementById('modalCloseBtn').onclick = closeModal;
+        }
+
+        function initUI() {
+            renderCards();
+            updateUIByLogin();
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active', 'bg-[#B89C68]', 'text-white'));
+                    tab.classList.add('active', 'bg-[#B89C68]', 'text-white');
+                    currentFilter = tab.dataset.filter;
+                    renderCards();
+                });
+            });
+            document.getElementById('subscribeBtn').addEventListener('click', subscribeFlow);
+            const drawer = document.getElementById('userDrawer');
+            const overlay = document.getElementById('drawerOverlay');
+            document.getElementById('userAvatarBtn').addEventListener('click', () => {
+                if (!currentUser) { showLoginModal(); return; }
+                drawer.classList.add('open');
+                overlay.classList.add('active');
+                updateSidebarLists();
+            });
+            const closeDrawer = () => { drawer.classList.remove('open'); overlay.classList.remove('active'); };
+            document.getElementById('closeDrawerBtn').addEventListener('click', closeDrawer);
+            overlay.addEventListener('click', closeDrawer);
+            document.getElementById('logoutSidebarBtn').addEventListener('click', () => { logout(); closeDrawer(); });
+            document.getElementById('clearFavSidebar').addEventListener('click', () => { if(currentUser){ favorites=[]; localStorage.setItem(`suxiu_favorites_${currentUser.id}`, JSON.stringify(favorites)); localStorage.setItem('suxiu_favorites', JSON.stringify(favorites)); renderCards(); updateSidebarLists(); showToast("已清空收藏"); } });
+            document.getElementById('clearBookSidebar').addEventListener('click', () => { if(currentUser){ bookings=[]; localStorage.setItem(`suxiu_bookings_${currentUser.id}`, JSON.stringify(bookings)); localStorage.setItem('suxiu_bookings', JSON.stringify(bookings)); renderCards(); updateSidebarLists(); showToast("已清空预约"); } });
+            document.getElementById('loginConfirmBtn').addEventListener('click', doLogin);
+            document.getElementById('loginRegisterBtn').addEventListener('click', showRegisterModal);
+            document.getElementById('loginCloseBtn').addEventListener('click', closeLoginModal);
+            document.getElementById('registerSubmitBtn').addEventListener('click', doRegister);
+            document.getElementById('registerBackBtn').addEventListener('click', () => { closeRegisterModal(); showLoginModal(); });
+            const menuBtn = document.getElementById('mobile-menu-btn');
+            const mobileNav = document.getElementById('mobile-nav');
+            menuBtn.addEventListener('click', () => mobileNav.classList.toggle('hidden'));
+            window.addEventListener('scroll', () => {
+                const header = document.getElementById('main-header');
+                if(window.scrollY > 20) header.classList.add('navbar-scrolled');
+                else header.classList.remove('navbar-scrolled');
+            });
+            let cart = JSON.parse(localStorage.getItem('suzhou_cart')) || [];
+            const badge = document.getElementById('cart-badge');
+            if(cart.length) badge.classList.remove('hidden');
+        }
+
+        initUI();
+    </script>
+</body>
+</html>

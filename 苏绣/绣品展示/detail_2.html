@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>苏绣作品详情页 - 彩墨荷塘</title>
+  <style>
+    :root{
+      --bg: #F2F8F4;
+      --text: #2F4B43;
+      --main-green: #7EA08F;
+      --light-green: #A9C3B2;
+      --white: rgba(255,255,255,0.78);
+      --glass: rgba(255,255,255,0.55);
+      --line: rgba(126,160,143,0.28);
+      --shadow: 0 12px 30px rgba(47,75,67,0.08);
+      --shadow-soft: 0 8px 18px rgba(47,75,67,0.06);
+    }
+
+    *{
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html{
+      scroll-behavior: smooth;
+    }
+
+    body{
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Serif SC", serif;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(169,195,178,0.18) 0%, transparent 18%),
+        radial-gradient(circle at 85% 30%, rgba(126,160,143,0.12) 0%, transparent 20%),
+        radial-gradient(circle at 75% 75%, rgba(169,195,178,0.12) 0%, transparent 18%),
+        linear-gradient(180deg, #F7FBF8 0%, var(--bg) 100%);
+      color: var(--text);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ================= 装饰纹样（可替换） ================= */
+    .pattern{
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.14;
+      filter: blur(0.2px);
+    }
+
+    .pattern svg{
+      width: 100%;
+      height: 100%;
+    }
+
+    .pattern-1{
+      top: 80px;
+      left: 20px;
+      width: 160px;
+      height: 160px;
+    }
+
+    .pattern-2{
+      top: 420px;
+      right: 30px;
+      width: 140px;
+      height: 140px;
+    }
+
+    .pattern-3{
+      bottom: 120px;
+      left: 30px;
+      width: 180px;
+      height: 180px;
+    }
+
+    .pattern-4{
+      bottom: 80px;
+      right: 40px;
+      width: 220px;
+      height: 220px;
+    }
+
+    /* 如果你后面想直接插入图片纹样，用这个类 */
+    .pattern-img {
+      width: 100%;
+      height: 100%;
+      max-height: 180px; /* 限制最大高度，避免撑破卡槽 */
+      object-fit: cover; /* 等比例裁剪，保证图片不变形 */
+      border-radius: 8px;
+    }
+    .img-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+    .img-modal img {
+      max-width: 90%;
+      max-height: 90%;
+    }
+    /* 鼠标移上去变小手 */
+    .pattern-img { cursor: pointer; }
+    /* ================= 容器 ================= */
+    .page{
+      position: relative;
+      z-index: 2;
+      width: min(1400px, 92%);
+      margin: 0 auto;
+      padding-bottom: 80px;
+    }
+
+    /* ================= 返回按钮 ================= */
+    .back-bar{
+      position: sticky;
+      top: 12px;
+      z-index: 50;
+      padding-top: 16px;
+      margin-bottom: 18px;
+    }
+
+    .back-btn{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(126,160,143,0.2);
+      border-radius: 999px;
+      text-decoration: none;
+      color: var(--text);
+      font-size: 14px;
+      box-shadow: var(--shadow-soft);
+      transition: 0.3s ease;
+    }
+
+    .back-btn:hover{
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.92);
+      color: var(--main-green);
+    }
+
+    /* ================= 顶部沉浸式主图 ================= */
+    .hero{
+      position: relative;
+      min-height: 88vh;
+      border-radius: 34px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 1.5fr 340px;
+      background: rgba(255,255,255,0.35);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+
+    .hero-main{
+      position: relative;
+      min-height: 88vh;
+      overflow: hidden;
+    }
+
+    .hero-main img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform: scale(1.02);
+      transition: opacity 0.45s ease, transform 0.6s ease;
+    }
+
+    .hero-main:hover img{
+      transform: scale(1.04);
+    }
+
+    .hero-overlay{
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(20,30,25,0.45) 0%, rgba(20,30,25,0.22) 35%, rgba(20,30,25,0.08) 55%, rgba(20,30,25,0.02) 100%),
+        linear-gradient(0deg, rgba(20,30,25,0.28) 0%, rgba(20,30,25,0.02) 35%);
+    }
+
+    .hero-content{
+      position: absolute;
+      left: 48px;
+      bottom: 52px;
+      max-width: 580px;
+      color: #F6FBF8;
+      z-index: 3;
+    }
+
+    .hero-tag{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.18);
+      font-size: 14px;
+      margin-bottom: 18px;
+      letter-spacing: 1px;
+    }
+
+    .hero-sub{
+      font-size: 18px;
+      letter-spacing: 6px;
+      opacity: 0.92;
+      margin-bottom: 10px;
+      font-weight: 300;
+    }
+
+    .hero-title{
+      font-size: clamp(58px, 8vw, 110px);
+      line-height: 1;
+      font-weight: 700;
+      margin-bottom: 18px;
+      text-shadow: 0 8px 18px rgba(0,0,0,0.18);
+    }
+
+    .hero-desc{
+      font-size: 16px;
+      line-height: 2;
+      padding: 18px 22px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 22px;
+      backdrop-filter: blur(12px);
+      margin-bottom: 18px;
+      color: rgba(246,251,248,0.96);
+    }
+
+    .hero-actions{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .btn{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 24px;
+      border-radius: 999px;
+      text-decoration: none;
+      transition: 0.3s ease;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary{
+      background: rgba(255,255,255,0.92);
+      color: var(--text);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+    }
+
+    .btn-primary:hover{
+      transform: translateY(-2px);
+      background: #ffffff;
+    }
+
+    .btn-outline{
+      background: rgba(255,255,255,0.12);
+      color: #F6FBF8;
+      border: 1px solid rgba(255,255,255,0.22);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-outline:hover{
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.18);
+    }
+
+    /* ================= 右侧备选图 ================= */
+    .hero-side{
+      position: relative;
+      padding: 22px 18px;
+      background: rgba(242,248,244,0.82);
+      backdrop-filter: blur(12px);
+      border-left: 1px solid rgba(126,160,143,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+
+    .side-title{
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 10px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.78);
+      border: 1px solid rgba(126,160,143,0.16);
+      font-size: 14px;
+      color: var(--main-green);
+      font-weight: 700;
+      letter-spacing: 1px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .thumb-card{
+      position: relative;
+      width: 100%;
+      height: 180px;
+      border-radius: 24px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: 0.35s ease;
+      box-shadow: var(--shadow-soft);
+      background: #dfeae4;
+      flex-shrink: 0;
+    }
+
+    .thumb-card:hover{
+      transform: translateY(-4px) scale(1.01);
+      border-color: rgba(126,160,143,0.35);
+    }
+
+    .thumb-card.active{
+      border-color: var(--main-green);
+      box-shadow: 0 10px 22px rgba(126,160,143,0.22);
+    }
+
+    .thumb-card img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .thumb-label{
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(47,75,67,0.55);
+      color: #F6FBF8;
+      backdrop-filter: blur(8px);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ================= 通用区块 ================= */
+    .section{
+      margin-top: 42px;
+      padding: 34px;
+      border-radius: 28px;
+      background: rgba(255,255,255,0.56);
+      border: 1px solid rgba(126,160,143,0.14);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section::before{
+      content: "";
+      position: absolute;
+      right: -30px;
+      top: -30px;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(169,195,178,0.12), transparent 65%);
+      pointer-events: none;
+    }
+
+    .section-head{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .section-title{
+      font-size: clamp(24px, 3vw, 34px);
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .section-sub{
+      color: var(--main-green);
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ================= 作品简介 ================= */
+    .intro-grid{
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .intro-image{
+      border-radius: 24px;
+      overflow: hidden;
+      min-height: 420px;
+      box-shadow: var(--shadow-soft);
+      background: #dce9e1;
+    }
+
+    .intro-image img, .intro-image video{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: 0.5s ease;
+    }
+
+    .intro-image:hover img{
+      transform: scale(1.03);
+    }
+
+    .intro-content{
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      justify-content: center;
+    }
+
+    .meta{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .meta span{
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(126,160,143,0.1);
+      color: var(--main-green);
+      font-size: 13px;
+      border: 1px solid rgba(126,160,143,0.16);
+    }
+
+    .intro-text{
+      padding: 14px 60px;
+      font-size: 16px;
+      line-height: 2;
+      color: rgba(47,75,67,0.92);
+    }
+
+    .intro-text p{
+      margin-bottom: 14px;
+    }
+
+    audio{
+      width: 100%;
+      margin-top: 6px;
+      border-radius: 14px;
+    }
+
+    /* ================= 工艺亮点 ================= */
+    .feature-grid{
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .feature-card{
+      padding: 22px 18px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.78);
+      border: 1px solid rgba(126,160,143,0.14);
+      box-shadow: var(--shadow-soft);
+      transition: 0.3s ease;
+    }
+
+    .feature-card:hover{
+      transform: translateY(-4px);
+      border-color: rgba(126,160,143,0.28);
+    }
+
+    .feature-index{
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(126,160,143,0.14);
+      color: var(--main-green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .feature-card h4{
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .feature-card p{
+      font-size: 14px;
+      line-height: 1.8;
+      color: rgba(47,75,67,0.82);
+    }
+
+    /* ================= 细节展示（可切换） ================= */
+    .detail-showcase{
+      display: grid;
+      grid-template-columns: 1.45fr 300px;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .detail-main{
+      border-radius: 26px;
+      overflow: hidden;
+      min-height: 520px;
+      background: #dce9e1;
+      box-shadow: var(--shadow-soft);
+      position: relative;
+    }
+
+    .detail-main img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: 0.45s ease;
+    }
+
+    .detail-caption{
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      padding: 14px 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.68);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(126,160,143,0.12);
+      color: var(--text);
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    .detail-side{
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .detail-thumb{
+      position: relative;
+      height: 155px;
+      border-radius: 22px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: var(--shadow-soft);
+      border: 2px solid transparent;
+      transition: 0.3s ease;
+      background: #dce9e1;
+    }
+
+    .detail-thumb:hover{
+      transform: translateY(-3px);
+    }
+
+    .detail-thumb.active{
+      border-color: var(--main-green);
+    }
+
+    .detail-thumb img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .detail-thumb span{
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      font-size: 13px;
+      color: #F6FBF8;
+      background: rgba(47,75,67,0.5);
+      border-radius: 14px;
+      padding: 8px 10px;
+      backdrop-filter: blur(8px);
+    }
+
+    /* ================= 纹样插件区 ================= */
+    .pattern-board{
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .pattern-slot{
+      min-height: 180px;
+      border-radius: 22px;
+      border: 2px dashed rgba(126,160,143,0.35);
+      background: rgba(255,255,255,0.52);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      transition: 0.3s ease;
+    }
+
+    .pattern-slot:hover{
+      border-color: var(--main-green);
+      transform: translateY(-3px);
+    }
+
+    .pattern-slot strong{
+      color: var(--main-green);
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .pattern-slot p{
+      font-size: 13px;
+      line-height: 1.8;
+      color: rgba(47,75,67,0.72);
+    }
+
+    /* ================= 底部 ================= */
+    footer{
+      margin-top: 40px;
+      padding: 24px;
+      text-align: center;
+      color: rgba(47,75,67,0.72);
+      font-size: 14px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.48);
+      border: 1px solid rgba(126,160,143,0.12);
+    }
+
+    /* ================= 响应式 ================= */
+    @media (max-width: 1200px){
+      .hero{
+        grid-template-columns: 1fr;
+      }
+
+      .hero-main{
+        min-height: 78vh;
+      }
+
+      .hero-side{
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 16px;
+      }
+
+      .side-title{
+        min-width: 180px;
+        position: static;
+      }
+
+      .thumb-card{
+        min-width: 220px;
+        height: 160px;
+      }
+
+      .detail-showcase{
+        grid-template-columns: 1fr;
+      }
+
+      .detail-side{
+        flex-direction: row;
+        overflow-x: auto;
+      }
+
+      .detail-thumb{
+        min-width: 220px;
+      }
+
+      .feature-grid{
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .pattern-board{
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 860px){
+      .hero-content{
+        left: 24px;
+        right: 24px;
+        bottom: 24px;
+        max-width: none;
+      }
+
+      .hero-title{
+        font-size: clamp(42px, 12vw, 72px);
+      }
+
+      .intro-grid{
+  display: block;    /* 修复布局：改为块级，不强制分栏 */
+  gap: 28px;
+  align-items: stretch;
+  width: 100%;
+}
+
+.intro-grid p {
+  width: 100%;
+  line-height: 1.8;       /* 文字更舒适 */
+  font-size: 15px;
+  color: #2F4B43;
+}
+
+      .feature-grid{
+        grid-template-columns: 1fr;
+      }
+
+      .pattern-board{
+        grid-template-columns: 1fr;
+      }
+
+      .section{
+        padding: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page">
+
+    <!-- 返回按钮 -->
+    <div class="back-bar">
+      <a href="suXiu_ShowWork.html" class="back-btn">← 返回</a>
+    </div>
+
+    <!-- ================= 作品简介 ================= -->
+    <section class="section" id="intro">
+      <div class="section-head">
+        <div>
+          <div class="section-sub">WORK INTRODUCTION  "CaiMoHeTang"</div>
+          <h2 class="section-title" style="display:inline;">作品简介</h2>
+          <h4 style="display:inline;">-《彩墨荷塘》--针代笔、线代墨的中西融合之作</h4>
+        </div>
+      </div>
+        <img src="images/caiMoHeTang.jpg" alt="作品简介图" style="width:100%; border-radius: 18px; margin-top: 18px; box-shadow: var(--shadow-soft);">
+        <p style="text-align:center;">《彩墨荷塘》</p>
+       <div class="intro-text">
+         <p>
+        <br><h3 style="color:black;"><b>创作溯源：袁运甫彩墨稿本与苏绣转化</b></h3>
+        苏绣《彩墨荷塘》脱胎于<b>当代彩墨画大师袁运甫</b>的经典纸本彩墨稿。袁运甫作为新中国第一代艺术家，长期任教于中央工艺美术学院（现清华大学美术学院），其 “袁公荷” 系列融合西方印象派光色理念与东方水墨泼洒技法，形成独树一帜的艺术风格🌿。<br>
+        2000 年前后，为适配外交部驻港部队机构贵宾室陈设需求，苏州刺绣厂受委托将袁运甫的彩墨荷塘稿本转化为苏绣作品。这幅绣品尺幅达<b>高 1.1 米、宽 2.3 米</b>，是当代苏绣将大型彩墨画 “以针代笔” 转化的典型案例，见证了苏绣对当代绘画艺术的承接与转化📜。<br>
+        <br><h3 style="color:black;"><b>技法演绎：乱针绣与光色融合的苏州实践</b></h3>
+        该作品由<b>吴曦、季绍平、黄南萍</b>三位青年绣工承担绣制，在<b>张美芳、任慧娴</b>的技术指导下完成，核心运用了苏绣<b>虚实乱针绣</b>技法，打破了传统平绣的平面局限⚡。<br>
+        绣娘们借鉴袁运甫 “空气透视法” 的构图逻辑，采用五百余种色彩丝线交织，通过长短交错的针脚模拟水墨晕染与色彩渗透。画面中深蓝墨色的莲叶与粉白荷花形成强烈对比，既保留了原作泼墨的豪放笔触，又通过丝线的光泽感还原了夏日荷塘的灵动光影，完美呈现 “接天莲叶无穷碧” 的江南意韵🎨。<br>
+        <br><h3 style="color:black;"><b>丝墨相融：彩墨荷塘的写意重构</b></h3>
+        《彩墨荷塘》最核心的艺术高度，在于用苏绣的针线，完美复刻并升华了袁运甫彩墨画的<b>写意精神</b>。<br>
+        它彻底跳出了传统苏绣 “写实、工细” 的固有框架，以乱针绣的长短疏密、丝线的浓淡交织，模拟出泼墨的酣畅、晕染的空灵，让针线不再只是描摹物象的工具，更成为传递气韵、抒发意境的载体。画面中，墨色荷叶的虚实相生、蓝绿水汽的朦胧氤氲、荷花的亭亭净植，无不是 “以形写神”，将江南荷塘的诗意与东方美学的留白意境，通过丝线的光泽与层次，呈现得淋漓尽致。<br>
+        这件作品不仅是苏绣技法创新的里程碑，更是传统工艺与当代艺术深度融合的典范。它证明了苏绣既能承载千年文脉的精工细作，也能驾驭现代写意的艺术表达，让古老技艺在当代审美中焕发新生，成为苏绣走向世界、连接传统与未来的经典之作。<br>
+        </p>
+      </div>
+      
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-sub">۞ 精美作品</div>
+          <h2 class="section-title">同主题作品展示区</h2>
+        </div>
+      </div>
+
+      <div class="pattern-board" style="
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        padding: 20px;
+      ">
+        <div class="pattern-slot" style="
+          border: 2px dashed #a5c9b7;
+          border-radius: 12px;
+          padding: 15px;
+          text-align: center;
+          background: rgba(255,255,255,0.5);
+        ">
+          <strong style="display: block; margin-bottom: 12px; color: #26462b; font-size: 20px;">《荷影留香》</strong>
+          <img class="pattern-img" src="images/work2/heYingLiuXiang.jpg" 
+              alt="苏绣细节" 
+              style="width: 100%; height: auto; border-radius: 8px; object-fit: cover;">
+        </div>
+
+        <div class="pattern-slot" style="
+          border: 2px dashed #a5c9b7;
+          border-radius: 12px;
+          padding: 15px;
+          text-align: center;
+          background: rgba(255,255,255,0.5);
+        ">
+          <strong style="display: block; margin-bottom: 12px; color: #26462b; font-size: 20px;">《晴荷素心》</strong>
+          <img class="pattern-img" src="images/work2/qingHeSuXin.png" 
+              alt="苏绣细节" 
+              style="width: 100%; height: auto; border-radius: 8px; object-fit: cover;">
+        </div>
+
+        <div class="pattern-slot" style="
+          border: 2px dashed #a5c9b7;
+          border-radius: 12px;
+          padding: 15px;
+          text-align: center;
+          background: rgba(255,255,255,0.5);
+        ">
+          <strong style="display: block; margin-bottom: 12px; color: #26462b; font-size: 20px;">《苏绣荷花台屏》</strong>
+          <img class="pattern-img" src="images/work2/hehua1.png" 
+              alt="苏绣细节" 
+              style="width: 100%; height: auto; border-radius: 8px; object-fit: cover;">
+        </div>
+
+        <div class="pattern-slot" style="
+          border: 2px dashed #a5c9b7;
+          border-radius: 12px;
+          padding: 15px;
+          text-align: center;
+          background: rgba(255,255,255,0.5);
+        ">
+          <strong style="display: block; margin-bottom: 12px; color: #26462b; font-size: 20px;">《苏绣荷花挂画》</strong>
+          <img class="pattern-img" src="images/work2/hehua2.png" 
+              alt="苏绣细节" 
+              style="width: 100%; height: auto; border-radius: 8px; object-fit: cover;">
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      ┄┅┄┅┄┅┄┅┄┅┄┅┄°《彩墨荷塘》作品详情页，敬请期待更多作品！°┄┅┄┅┄┅┄┅┄┅┄┅┄
+    </footer>
+  </div>
+
+  <script>
+    /* ================= 首屏右侧备选图切换主图 ================= */
+    const heroMainImage = document.getElementById('heroMainImage');
+    const heroTitle = document.getElementById('heroTitle');
+    const heroDesc = document.getElementById('heroDesc');
+    const thumbCards = document.querySelectorAll('.thumb-card');
+
+    thumbCards.forEach(card => {
+      card.addEventListener('click', () => {
+        const newImg = card.getAttribute('data-img');
+        const newTitle = card.getAttribute('data-title');
+        const newDesc = card.getAttribute('data-desc');
+
+        heroMainImage.style.opacity = '0.25';
+        heroMainImage.style.transform = 'scale(1.06)';
+
+        setTimeout(() => {
+          heroMainImage.src = newImg;
+          heroTitle.textContent = newTitle;
+          heroDesc.textContent = newDesc;
+
+          heroMainImage.style.opacity = '1';
+          heroMainImage.style.transform = 'scale(1.02)';
+        }, 180);
+
+        thumbCards.forEach(item => item.classList.remove('active'));
+        card.classList.add('active');
+      });
+    });
+
+    /* ================= 细节图切换 ================= */
+    const detailMainImage = document.getElementById('detailMainImage');
+    const detailCaption = document.getElementById('detailCaption');
+    const detailThumbs = document.querySelectorAll('.detail-thumb');
+
+    detailThumbs.forEach(item => {
+      item.addEventListener('click', () => {
+        const img = item.getAttribute('data-detail-img');
+        const text = item.getAttribute('data-detail-text');
+
+        detailMainImage.style.opacity = '0.3';
+
+        setTimeout(() => {
+          detailMainImage.src = img;
+          detailCaption.textContent = text;
+          detailMainImage.style.opacity = '1';
+        }, 180);
+
+        detailThumbs.forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

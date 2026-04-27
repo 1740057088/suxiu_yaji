@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>苏绣作品详情页 - 千里江山图</title>
+  <style>
+    :root{
+      --bg: #F2F8F4;
+      --text: #2F4B43;
+      --main-green: #7EA08F;
+      --light-green: #A9C3B2;
+      --white: rgba(255,255,255,0.78);
+      --glass: rgba(255,255,255,0.55);
+      --line: rgba(126,160,143,0.28);
+      --shadow: 0 12px 30px rgba(47,75,67,0.08);
+      --shadow-soft: 0 8px 18px rgba(47,75,67,0.06);
+    }
+
+    *{
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html{
+      scroll-behavior: smooth;
+    }
+
+    body{
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Serif SC", serif;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(169,195,178,0.18) 0%, transparent 18%),
+        radial-gradient(circle at 85% 30%, rgba(126,160,143,0.12) 0%, transparent 20%),
+        radial-gradient(circle at 75% 75%, rgba(169,195,178,0.12) 0%, transparent 18%),
+        linear-gradient(180deg, #F7FBF8 0%, var(--bg) 100%);
+      color: var(--text);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ================= 装饰纹样（可替换） ================= */
+    .pattern{
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.14;
+      filter: blur(0.2px);
+    }
+
+    .pattern svg{
+      width: 100%;
+      height: 100%;
+    }
+
+    .pattern-1{
+      top: 80px;
+      left: 20px;
+      width: 160px;
+      height: 160px;
+    }
+
+    .pattern-2{
+      top: 420px;
+      right: 30px;
+      width: 140px;
+      height: 140px;
+    }
+
+    .pattern-3{
+      bottom: 120px;
+      left: 30px;
+      width: 180px;
+      height: 180px;
+    }
+
+    .pattern-4{
+      bottom: 80px;
+      right: 40px;
+      width: 220px;
+      height: 220px;
+    }
+
+    /* 如果你后面想直接插入图片纹样，用这个类 */
+    .pattern-img {
+      width: 100%;
+      height: 100%;
+      max-height: 180px; /* 限制最大高度，避免撑破卡槽 */
+      object-fit: cover; /* 等比例裁剪，保证图片不变形 */
+      border-radius: 8px;
+    }
+    .img-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+    .img-modal img {
+      max-width: 90%;
+      max-height: 90%;
+    }
+    /* 鼠标移上去变小手 */
+    .pattern-img { cursor: pointer; }
+    /* ================= 容器 ================= */
+    .page{
+      position: relative;
+      z-index: 2;
+      width: min(1400px, 92%);
+      margin: 0 auto;
+      padding-bottom: 80px;
+    }
+
+    /* ================= 返回按钮 ================= */
+    .back-bar{
+      position: sticky;
+      top: 12px;
+      z-index: 50;
+      padding-top: 16px;
+      margin-bottom: 18px;
+    }
+
+    .back-btn{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(126,160,143,0.2);
+      border-radius: 999px;
+      text-decoration: none;
+      color: var(--text);
+      font-size: 14px;
+      box-shadow: var(--shadow-soft);
+      transition: 0.3s ease;
+    }
+
+    .back-btn:hover{
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.92);
+      color: var(--main-green);
+    }
+
+    /* ================= 顶部沉浸式主图 ================= */
+    .hero{
+      position: relative;
+      min-height: 88vh;
+      border-radius: 34px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 1.5fr 340px;
+      background: rgba(255,255,255,0.35);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.5);
+    }
+
+    .hero-main{
+      position: relative;
+      min-height: 88vh;
+      overflow: hidden;
+    }
+
+    .hero-main img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform: scale(1.02);
+      transition: opacity 0.45s ease, transform 0.6s ease;
+    }
+
+    .hero-main:hover img{
+      transform: scale(1.04);
+    }
+
+    .hero-overlay{
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(20,30,25,0.45) 0%, rgba(20,30,25,0.22) 35%, rgba(20,30,25,0.08) 55%, rgba(20,30,25,0.02) 100%),
+        linear-gradient(0deg, rgba(20,30,25,0.28) 0%, rgba(20,30,25,0.02) 35%);
+    }
+
+    .hero-content{
+      position: absolute;
+      left: 48px;
+      bottom: 52px;
+      max-width: 580px;
+      color: #F6FBF8;
+      z-index: 3;
+    }
+
+    .hero-tag{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.18);
+      font-size: 14px;
+      margin-bottom: 18px;
+      letter-spacing: 1px;
+    }
+
+    .hero-sub{
+      font-size: 18px;
+      letter-spacing: 6px;
+      opacity: 0.92;
+      margin-bottom: 10px;
+      font-weight: 300;
+    }
+
+    .hero-title{
+      font-size: clamp(58px, 8vw, 110px);
+      line-height: 1;
+      font-weight: 700;
+      margin-bottom: 18px;
+      text-shadow: 0 8px 18px rgba(0,0,0,0.18);
+    }
+
+    .hero-desc{
+      font-size: 16px;
+      line-height: 2;
+      padding: 18px 22px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 22px;
+      backdrop-filter: blur(12px);
+      margin-bottom: 18px;
+      color: rgba(246,251,248,0.96);
+    }
+
+    .hero-actions{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .btn{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 24px;
+      border-radius: 999px;
+      text-decoration: none;
+      transition: 0.3s ease;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary{
+      background: rgba(255,255,255,0.92);
+      color: var(--text);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+    }
+
+    .btn-primary:hover{
+      transform: translateY(-2px);
+      background: #ffffff;
+    }
+
+    .btn-outline{
+      background: rgba(255,255,255,0.12);
+      color: #F6FBF8;
+      border: 1px solid rgba(255,255,255,0.22);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-outline:hover{
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.18);
+    }
+
+    /* ================= 右侧备选图 ================= */
+    .hero-side{
+      position: relative;
+      padding: 22px 18px;
+      background: rgba(242,248,244,0.82);
+      backdrop-filter: blur(12px);
+      border-left: 1px solid rgba(126,160,143,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+
+    .side-title{
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 10px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.78);
+      border: 1px solid rgba(126,160,143,0.16);
+      font-size: 14px;
+      color: var(--main-green);
+      font-weight: 700;
+      letter-spacing: 1px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .thumb-card{
+      position: relative;
+      width: 100%;
+      height: 180px;
+      border-radius: 24px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: 0.35s ease;
+      box-shadow: var(--shadow-soft);
+      background: #dfeae4;
+      flex-shrink: 0;
+    }
+
+    .thumb-card:hover{
+      transform: translateY(-4px) scale(1.01);
+      border-color: rgba(126,160,143,0.35);
+    }
+
+    .thumb-card.active{
+      border-color: var(--main-green);
+      box-shadow: 0 10px 22px rgba(126,160,143,0.22);
+    }
+
+    .thumb-card img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .thumb-label{
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(47,75,67,0.55);
+      color: #F6FBF8;
+      backdrop-filter: blur(8px);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ================= 通用区块 ================= */
+    .section{
+      margin-top: 42px;
+      padding: 34px;
+      border-radius: 28px;
+      background: rgba(255,255,255,0.56);
+      border: 1px solid rgba(126,160,143,0.14);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section::before{
+      content: "";
+      position: absolute;
+      right: -30px;
+      top: -30px;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(169,195,178,0.12), transparent 65%);
+      pointer-events: none;
+    }
+
+    .section-head{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .section-title{
+      font-size: clamp(24px, 3vw, 34px);
+      color: var(--text);
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .section-sub{
+      color: var(--main-green);
+      font-size: 14px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* ================= 作品简介 ================= */
+    .intro-grid{
+      display: grid;
+      grid-template-columns: 1.05fr 1fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .intro-image{
+      border-radius: 24px;
+      overflow: hidden;
+      min-height: 420px;
+      box-shadow: var(--shadow-soft);
+      background: #dce9e1;
+    }
+
+    .intro-image img, .intro-image video{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: 0.5s ease;
+    }
+
+    .intro-image:hover img{
+      transform: scale(1.03);
+    }
+
+    .intro-content{
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      justify-content: center;
+    }
+
+    .meta{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .meta span{
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(126,160,143,0.1);
+      color: var(--main-green);
+      font-size: 13px;
+      border: 1px solid rgba(126,160,143,0.16);
+    }
+
+    .intro-text{
+      font-size: 16px;
+      line-height: 2;
+      color: rgba(47,75,67,0.92);
+    }
+
+    .intro-text p{
+      margin-bottom: 14px;
+    }
+
+    audio{
+      width: 100%;
+      margin-top: 6px;
+      border-radius: 14px;
+    }
+
+    /* ================= 工艺亮点 ================= */
+    .feature-grid{
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .feature-card{
+      padding: 22px 18px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.78);
+      border: 1px solid rgba(126,160,143,0.14);
+      box-shadow: var(--shadow-soft);
+      transition: 0.3s ease;
+    }
+
+    .feature-card:hover{
+      transform: translateY(-4px);
+      border-color: rgba(126,160,143,0.28);
+    }
+
+    .feature-index{
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(126,160,143,0.14);
+      color: var(--main-green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .feature-card h4{
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .feature-card p{
+      font-size: 14px;
+      line-height: 1.8;
+      color: rgba(47,75,67,0.82);
+    }
+
+    /* ================= 细节展示（可切换） ================= */
+    .detail-showcase{
+      display: grid;
+      grid-template-columns: 1.45fr 300px;
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .detail-main{
+      border-radius: 26px;
+      overflow: hidden;
+      min-height: 520px;
+      background: #dce9e1;
+      box-shadow: var(--shadow-soft);
+      position: relative;
+    }
+
+    .detail-main img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: 0.45s ease;
+    }
+
+    .detail-caption{
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      padding: 14px 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.68);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(126,160,143,0.12);
+      color: var(--text);
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    .detail-side{
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .detail-thumb{
+      position: relative;
+      height: 155px;
+      border-radius: 22px;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: var(--shadow-soft);
+      border: 2px solid transparent;
+      transition: 0.3s ease;
+      background: #dce9e1;
+    }
+
+    .detail-thumb:hover{
+      transform: translateY(-3px);
+    }
+
+    .detail-thumb.active{
+      border-color: var(--main-green);
+    }
+
+    .detail-thumb img{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .detail-thumb span{
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      font-size: 13px;
+      color: #F6FBF8;
+      background: rgba(47,75,67,0.5);
+      border-radius: 14px;
+      padding: 8px 10px;
+      backdrop-filter: blur(8px);
+    }
+
+    /* ================= 纹样插件区 ================= */
+    .pattern-board{
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .pattern-slot{
+      min-height: 180px;
+      border-radius: 22px;
+      border: 2px dashed rgba(126,160,143,0.35);
+      background: rgba(255,255,255,0.52);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      transition: 0.3s ease;
+    }
+
+    .pattern-slot:hover{
+      border-color: var(--main-green);
+      transform: translateY(-3px);
+    }
+
+    .pattern-slot strong{
+      color: var(--main-green);
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .pattern-slot p{
+      font-size: 13px;
+      line-height: 1.8;
+      color: rgba(47,75,67,0.72);
+    }
+
+    /* ================= 底部 ================= */
+    footer{
+      margin-top: 40px;
+      padding: 24px;
+      text-align: center;
+      color: rgba(47,75,67,0.72);
+      font-size: 14px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.48);
+      border: 1px solid rgba(126,160,143,0.12);
+    }
+
+    /* ================= 响应式 ================= */
+    @media (max-width: 1200px){
+      .hero{
+        grid-template-columns: 1fr;
+      }
+
+      .hero-main{
+        min-height: 78vh;
+      }
+
+      .hero-side{
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 16px;
+      }
+
+      .side-title{
+        min-width: 180px;
+        position: static;
+      }
+
+      .thumb-card{
+        min-width: 220px;
+        height: 160px;
+      }
+
+      .detail-showcase{
+        grid-template-columns: 1fr;
+      }
+
+      .detail-side{
+        flex-direction: row;
+        overflow-x: auto;
+      }
+
+      .detail-thumb{
+        min-width: 220px;
+      }
+
+      .feature-grid{
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .pattern-board{
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 860px){
+      .hero-content{
+        left: 24px;
+        right: 24px;
+        bottom: 24px;
+        max-width: none;
+      }
+
+      .hero-title{
+        font-size: clamp(42px, 12vw, 72px);
+      }
+
+      .intro-grid{
+        grid-template-columns: 1fr;
+      }
+
+      .feature-grid{
+        grid-template-columns: 1fr;
+      }
+
+      .pattern-board{
+        grid-template-columns: 1fr;
+      }
+
+      .section{
+        padding: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+
+  <div class="page">
+
+    <!-- 返回按钮 -->
+    <div class="back-bar">
+      <a href="suXiu_ShowWork.html" class="back-btn">← 返回</a>
+    </div>
+
+    <!-- ================= 作品简介 ================= -->
+    <section class="section" id="intro">
+      <div class="section-head">
+        <div>
+          <div class="section-sub">WORK INTRODUCTION  "QianLiJiangShanTu"</div>
+          <h2 class="section-title" style="display:inline;">作品简介</h2>
+          <h4 style="display:inline;">-《千里江山图》</h4>
+        </div>
+      </div>
+
+      <div class="intro-grid">
+        <div class="intro-image">
+          <video width="100%" height="100%" controls>
+            <source src="images/work3/baike_qljs.mp4" type="video/mp4">
+            您的浏览器不支持视频播放。
+          </video>
+        </div>
+
+        <div class="intro-content">
+          <div class="meta">
+            <span>类别：山水绣</span>
+            <span>工艺：平针绣 / 打籽绣 / 盘金绣</span>
+            <span>主题：青山绿水 / 古画复刻 / 家国情怀</span><br>
+            <span>代表创作者：朱寿珍、姚建萍等苏绣国家级传承人</span>
+          </div>
+
+          <div class="intro-text">
+            <p>
+              《千里江山图》苏绣作品，是对中国传统名画的艺术再创作，也是苏绣技艺与中国传统文化深度融合的体现。点击左侧视频可观看百科了解更多。（视频来源于腾讯视频，作者：新华收藏）
+            </p>
+            <p>
+              它展现了苏绣 “精细雅洁” 的工艺之美，也传承了中国青绿山水的文化底蕴，让千年国宝以可触摸、可传承的方式，走进当代生活，成为苏绣艺术中具有代表性的作品。
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 苏绣纹样插件位（方便你后续插图） ================= -->
+    <section class="section">
+      <div class="section-head">
+        <div>
+          <div class="section-sub">۞ 精美作品</div>
+          <h2 class="section-title">同主题作品展示区</h2>
+        </div>
+      </div>
+
+      <div class="pattern-board" style="
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        padding: 20px;
+      ">
+        <div class="pattern-slot" style="
+          border: 2px dashed #a5c9b7;
+          border-radius: 12px;
+          padding: 15px;
+          text-align: center;
+          background: rgba(255,255,255,0.5);
+        ">
+          <strong style="display: block; margin-bottom: 12px; color: #26462b; font-size: 20px;">《启航》</strong>
+          <img class="pattern-img" src="images/work3/qiHang.png" 
+              alt="苏绣细节" 
+              style="width: 100%; height: auto; border-radius: 8px; object-fit: cover;">
+        </div>
+
+        <div class="pattern-slot" style="
+          border: 2px dashed #a5c9b7;
+          border-radius: 12px;
+          padding: 15px;
+          text-align: center;
+          background: rgba(255,255,255,0.5);
+        ">
+          <strong style="display: block; margin-bottom: 12px; color: #26462b; font-size: 20px;">《志存高远》</strong>
+          <img class="pattern-img" src="images/work3/zhiCunGaoYuan.jpg" 
+              alt="苏绣细节" 
+              style="width: 100%; height: auto; border-radius: 8px; object-fit: cover;">
+        <strong style="display: block; margin-bottom: 12px; color: #26462b; font-size: 20px;">《货郎图》</strong>
+          <img class="pattern-img" src="images/work3/huoLangTu.jpg" 
+              alt="苏绣细节" 
+              style="width: 100%; height: auto; border-radius: 8px; object-fit: cover;">
+        </div>
+
+        <div class="pattern-slot" style="
+          border: 2px dashed #a5c9b7;
+          border-radius: 12px;
+          padding: 15px;
+          text-align: center;
+          background: rgba(255,255,255,0.5);
+        ">
+          <strong style="display: block; margin-bottom: 12px; color: #26462b; font-size: 20px;">《吹箫引凤》</strong>
+          <img class="pattern-img" src="images/work3/chuixiaoyinfeng.png" 
+              alt="苏绣细节" 
+              style="width: 100%; height: auto; border-radius: 8px; object-fit: cover;">
+        </div>
+
+        <div class="pattern-slot" style="
+          border: 2px dashed #a5c9b7;
+          border-radius: 12px;
+          padding: 15px;
+          text-align: center;
+          background: rgba(255,255,255,0.5);
+        ">
+          <strong style="display: block; margin-bottom: 12px; color: #26462b; font-size: 20px;">《清明上河图》</strong>
+          <img class="pattern-img" src="images/work3/qmsht.png" 
+              alt="苏绣细节" 
+              style="width: 100%; height: auto; border-radius: 8px; object-fit: cover;">
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      ┄┅┄┅┄┅┄┅┄┅┄┅┄°《千里江山图》作品详情页，敬请期待更多作品！°┄┅┄┅┄┅┄┅┄┅┄┅┄
+    </footer>
+  </div>
+
+  <script>
+    /* ================= 首屏右侧备选图切换主图 ================= */
+    const heroMainImage = document.getElementById('heroMainImage');
+    const heroTitle = document.getElementById('heroTitle');
+    const heroDesc = document.getElementById('heroDesc');
+    const thumbCards = document.querySelectorAll('.thumb-card');
+
+    thumbCards.forEach(card => {
+      card.addEventListener('click', () => {
+        const newImg = card.getAttribute('data-img');
+        const newTitle = card.getAttribute('data-title');
+        const newDesc = card.getAttribute('data-desc');
+
+        heroMainImage.style.opacity = '0.25';
+        heroMainImage.style.transform = 'scale(1.06)';
+
+        setTimeout(() => {
+          heroMainImage.src = newImg;
+          heroTitle.textContent = newTitle;
+          heroDesc.textContent = newDesc;
+
+          heroMainImage.style.opacity = '1';
+          heroMainImage.style.transform = 'scale(1.02)';
+        }, 180);
+
+        thumbCards.forEach(item => item.classList.remove('active'));
+        card.classList.add('active');
+      });
+    });
+
+    /* ================= 细节图切换 ================= */
+    const detailMainImage = document.getElementById('detailMainImage');
+    const detailCaption = document.getElementById('detailCaption');
+    const detailThumbs = document.querySelectorAll('.detail-thumb');
+
+    detailThumbs.forEach(item => {
+      item.addEventListener('click', () => {
+        const img = item.getAttribute('data-detail-img');
+        const text = item.getAttribute('data-detail-text');
+
+        detailMainImage.style.opacity = '0.3';
+
+        setTimeout(() => {
+          detailMainImage.src = img;
+          detailCaption.textContent = text;
+          detailMainImage.style.opacity = '1';
+        }, 180);
+
+        detailThumbs.forEach(el => el.classList.remove('active'));
+        item.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

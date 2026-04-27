@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>苏绣雅集 · 我的购物车</title>
+    <!-- Tailwind CSS v3 + Font Awesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --bg-green: #F2F8F4;
+            --text-dark: #2F4B43;
+            --suzhou-green: #7EA08F;
+            --suzhou-light: #A9C3B2;
+            --silk-gold: #B89C68;
+        }
+        body {
+            background-color: var(--bg-green);
+            color: var(--text-dark);
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            scroll-behavior: smooth;
+        }
+        .font-serif-cn {
+            font-family: 'Times New Roman', '宋体', 'Ma Shan Zheng', 'Noto Serif SC', serif;
+        }
+        .embroidery-pattern {
+            background-image: radial-gradient(circle at 10% 20%, rgba(184,156,104,0.08) 1.5px, transparent 1px);
+            background-size: 18px 18px;
+        }
+        .cloud-pattern {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23B89C68" opacity="0.05"><path d="M6.5 12.5c0-1.38 1.12-2.5 2.5-2.5.53 0 1.02.16 1.42.44.47-1.06 1.55-1.78 2.78-1.78 1.68 0 3.04 1.36 3.04 3.04 0 .23-.03.45-.08.66.93.33 1.6 1.16 1.6 2.14 0 1.24-1.01 2.25-2.25 2.25h-8.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5z"/></svg>');
+            background-repeat: repeat;
+            background-size: 32px;
+        }
+        .navbar-scrolled {
+            background-color: rgba(242, 248, 244, 0.92) !important;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        .btn-scale:active {
+            transform: scale(0.97);
+            transition: transform 0.1s;
+        }
+        .cart-item {
+            transition: all 0.2s ease;
+        }
+        .quantity-btn {
+            transition: all 0.1s;
+        }
+        .quantity-btn:active {
+            transform: scale(0.92);
+        }
+        .recommend-card {
+            transition: transform 0.25s, box-shadow 0.25s;
+        }
+        .recommend-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px -8px rgba(0,0,0,0.12);
+        }
+        #toast-message {
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        /* 微信二维码弹窗样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .qr-modal {
+            background: white;
+            border-radius: 32px;
+            max-width: 340px;
+            width: 90%;
+            padding: 28px 24px 32px;
+            text-align: center;
+            transform: scale(0.95);
+            transition: transform 0.25s ease;
+            box-shadow: 0 25px 40px rgba(0,0,0,0.2);
+            border: 1px solid var(--suzhou-light);
+        }
+        .modal-overlay.active .qr-modal {
+            transform: scale(1);
+        }
+        @media (max-width: 768px) {
+            .mobile-menu {
+                display: none;
+            }
+            .mobile-menu.open {
+                display: block;
+                position: absolute;
+                top: 64px;
+                left: 0;
+                right: 0;
+                background: var(--bg-green);
+                padding: 1rem;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+                z-index: 50;
+            }
+        }
+    </style>
+</head>
+<body class="embroidery-pattern cloud-pattern">
+
+    <!-- 导航栏（与首页风格一致，高亮购物车） -->
+    <header id="main-header" class="sticky top-0 z-50 bg-[#F2F8F4] transition-all duration-300 w-full">
+        <div class="container mx-auto px-4 md:px-8 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-feather-alt text-2xl" style="color: #B89C68;"></i>
+                <span class="font-serif-cn text-xl md:text-2xl font-semibold tracking-wide" style="color:#2F4B43;">苏绣雅集</span>
+                <span class="hidden md:inline-block text-xs ml-1 border-l pl-2 border-[#7EA08F] italic">绣蕴东方</span>
+            </div>
+            <nav class="hidden md:flex space-x-7 text-[#2F4B43] font-medium">
+                <a href="index.html" class="nav-link hover:text-[#B89C68] transition">首页</a>
+                <a href="shop.html" class="nav-link hover:text-[#B89C68] transition">作品展示</a>
+                <a href="#" class="hover:text-[#B89C68] transition">工艺百科</a>
+                <a href="#" class="hover:text-[#B89C68] transition">匠人档案</a>
+                <a href="shop.html" class="hover:text-[#B89C68] transition">文创商店</a>
+                <a href="cart.html" class="text-[#B89C68] border-b-2 border-[#B89C68] pb-1">购物车</a>
+            </nav>
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-user-circle text-2xl cursor-pointer hover:text-[#B89C68] transition"></i>
+                <a href="cart.html" class="relative">
+                    <i class="fas fa-shopping-bag text-xl cursor-pointer hover:text-[#B89C68] transition"></i>
+                    <span id="cart-badge" class="absolute -top-2 -right-3 bg-[#B89C68] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                </a>
+                <button id="mobile-menu-btn" class="md:hidden text-2xl focus:outline-none"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+        <div id="mobile-nav" class="mobile-menu md:hidden bg-[#F2F8F4] border-t border-[#A9C3B2]">
+            <div class="flex flex-col space-y-3 p-4">
+                <a href="index.html" class="py-2 hover:bg-[#A9C3B2]/20 pl-2 rounded">首页</a>
+                <a href="shop.html" class="py-2 hover:bg-[#A9C3B2]/20 pl-2 rounded">作品展示</a>
+                <a href="#" class="py-2 hover:bg-[#A9C3B2]/20 pl-2 rounded">工艺百科</a>
+                <a href="#" class="py-2 hover:bg-[#A9C3B2]/20 pl-2 rounded">匠人档案</a>
+                <a href="shop.html" class="py-2 hover:bg-[#A9C3B2]/20 pl-2 rounded">珍藏商城</a>
+                <a href="cart.html" class="py-2 hover:bg-[#A9C3B2]/20 pl-2 rounded text-[#B89C68]">购物车</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 md:py-12">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- 左侧购物车列表区 -->
+            <div class="lg:w-2/3">
+                <div class="flex items-center justify-between mb-6">
+                    <h1 class="font-serif-cn text-3xl md:text-4xl text-[#2F4B43] flex items-center gap-2"><i class="fas fa-shopping-cart text-[#B89C68] text-3xl"></i> 我的购物车</h1>
+                    <button id="clear-cart-btn" class="text-sm text-gray-500 hover:text-red-500 transition flex items-center gap-1"><i class="fas fa-trash-alt"></i> 清空购物车</button>
+                </div>
+                <div id="cart-container" class="bg-white/70 backdrop-blur-sm rounded-2xl shadow-sm overflow-hidden">
+                    <!-- 动态购物车列表渲染（新添加的商品会出现在最上面） -->
+                    <div id="cart-items-list" class="divide-y divide-[#A9C3B2]/30">
+                        <!-- 空状态或列表js填充 -->
+                    </div>
+                    <!-- 购物车底部汇总 -->
+                    <div id="cart-summary" class="p-5 bg-white/50 border-t border-[#A9C3B2]/30 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div class="flex flex-col sm:flex-row gap-4 sm:gap-8 text-sm">
+                            <span class="text-gray-600">共 <span id="total-items-count">0</span> 件商品</span>
+                            <span class="text-gray-600">总计金额: <span id="total-price" class="text-2xl font-bold text-[#B89C68]">¥0</span></span>
+                        </div>
+                        <button id="checkout-btn" class="bg-[#2F4B43] hover:bg-[#1f352e] text-white px-8 py-3 rounded-full shadow-md transition btn-scale flex items-center gap-2"><i class="fab fa-weixin"></i> 微信扫码结账</button>
+                    </div>
+                </div>
+                <!-- 空购物车提示（隐藏） -->
+                <div id="empty-cart-message" class="hidden flex flex-col items-center justify-center py-16 text-center bg-white/50 rounded-2xl mt-4">
+                    <i class="fas fa-shopping-basket text-5xl text-[#A9C3B2] mb-3"></i>
+                    <p class="text-gray-500 text-lg">您的购物车空空如也～</p>
+                    <a href="shop.html" class="mt-4 inline-block bg-[#B89C68] hover:bg-[#9e7f52] text-white px-6 py-2 rounded-full">前往挑选雅物</a>
+                </div>
+            </div>
+
+            <!-- 右侧推荐与筛选区 (优质苏绣推荐 + 价格筛选) -->
+            <div class="lg:w-1/3">
+                <!-- 价格筛选卡片 -->
+                <div class="bg-white/70 backdrop-blur-sm rounded-2xl p-5 shadow-sm mb-6">
+                    <h3 class="font-serif-cn text-xl mb-3 flex items-center gap-2"><i class="fas fa-filter text-[#B89C68]"></i> 价格筛选 · 优质苏绣</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-sm">
+                            <span>最高价格 (¥)</span>
+                            <span id="price-range-value" class="font-semibold text-[#B89C68]">9999999</span>
+                        </div>
+                        <input type="range" id="price-filter" min="0" max="10000000" step="2000" value="9999999" class="w-full">
+                        <button id="apply-price-filter" class="w-full bg-[#7EA08F] hover:bg-[#5c836e] text-white py-2 rounded-full transition text-sm btn-scale">筛选推荐作品</button>
+                    </div>
+                </div>
+                
+                <!-- 优质苏绣推荐区域 -->
+                <div class="bg-white/70 backdrop-blur-sm rounded-2xl p-5 shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-serif-cn text-xl flex items-center gap-2"><i class="fas fa-star text-[#B89C68]"></i> 优质苏绣 · 匠心推荐</h3>
+                        <button id="reset-recommend" class="text-xs text-[#7EA08F] hover:underline"><i class="fas fa-sync-alt"></i> 重置推荐</button>
+                    </div>
+                    <div id="recommend-list" class="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                        <!-- 动态推荐商品卡片 -->
+                    </div>
+                    <p id="no-recommend-tip" class="text-center text-gray-400 text-sm py-4 hidden">暂无更多推荐～ 调整价格试试</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 微信二维码结算弹窗 -->
+    <div id="wechat-modal" class="modal-overlay">
+        <div class="qr-modal">
+            <div class="flex justify-end">
+                <button id="close-modal" class="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+            </div>
+            <div class="mt-2">
+                <i class="fab fa-weixin text-5xl text-[#2DC100] mb-2"></i>
+                <h3 class="font-serif-cn text-xl font-semibold text-[#2F4B43]">微信支付</h3>
+                <p class="text-sm text-gray-500 mt-1">请使用微信扫码完成支付</p>
+                <div class="my-5 flex justify-center">
+                    <!-- 苏绣雅集专属收款二维码（模拟图片，实际可替换为真实收款码） -->
+                    <img id="qrcode-img" src="./苏绣/二维码.jpg" alt="微信收款二维码" class="w-44 h-44 rounded-xl shadow-md border border-gray-100">
+                </div>
+                <p class="text-xs text-gray-400">打开微信扫一扫 · 支付后自动完成订单</p>
+                <button id="mock-pay-success" class="mt-4 w-full bg-[#B89C68] hover:bg-[#9e7f52] text-white py-2 rounded-full text-sm transition">总金额：¥<span id="modal-total-amount">0</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast-message" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#2F4B43] text-white px-5 py-2 rounded-full shadow-lg z-[100] opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2"><i class="fas fa-check-circle text-[#B89C68]"></i><span></span></div>
+
+    <script>
+        // ---------- 购物车核心逻辑 (新商品自动置顶：每次添加都会把新增商品挪到数组最前面)----------
+        let cart = JSON.parse(localStorage.getItem('suzhou_cart')) || [];
+
+        // 辅助函数：保存购物车 & 更新徽章 & 重绘购物车界面（购物车按添加顺序显示，最新的在最上面）
+        function saveCartAndSync() {
+            localStorage.setItem('suzhou_cart', JSON.stringify(cart));
+            updateCartBadge();
+            renderCartPage();
+        }
+
+        function updateCartBadge() {
+            const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const badge = document.getElementById('cart-badge');
+            if(badge) {
+                if(totalQty > 0) {
+                    badge.innerText = totalQty;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+        }
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast-message');
+            const iconSpan = toast.querySelector('i');
+            if(isError) {
+                iconSpan.className = "fas fa-exclamation-circle text-amber-300";
+            } else {
+                iconSpan.className = "fas fa-check-circle text-[#B89C68]";
+            }
+            toast.querySelector('span').innerText = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2200);
+        }
+
+        // 增加数量（不改变排序）
+        function updateQuantity(productId, delta) {
+            const idx = cart.findIndex(item => item.id === productId);
+            if(idx !== -1) {
+                const newQty = cart[idx].quantity + delta;
+                if(newQty <= 0) {
+                    cart.splice(idx, 1);
+                    showToast(`已移除商品`);
+                } else {
+                    cart[idx].quantity = newQty;
+                    showToast(`数量已更新`);
+                }
+                saveCartAndSync();
+            }
+        }
+
+        function removeItem(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            showToast(`商品已从购物车删除`);
+            saveCartAndSync();
+        }
+
+        // 清空购物车
+        function clearCart() {
+            if(cart.length === 0) {
+                showToast(`购物车已经是空的`, true);
+                return;
+            }
+            cart = [];
+            saveCartAndSync();
+            showToast(`购物车已清空`);
+        }
+
+        // 重点：添加商品时，如果已存在则增加数量并提升到最前面；如果是新商品则直接unshift
+        // 为了外部调用方便，提供此方法（也供推荐区域调用）
+        function addToCartWithPriority(product) {
+            const existingIndex = cart.findIndex(item => item.id === product.id);
+            if(existingIndex !== -1) {
+                // 存在: 数量+1，并把该项移动到数组最前面
+                cart[existingIndex].quantity += 1;
+                const movedItem = cart.splice(existingIndex, 1)[0];
+                cart.unshift(movedItem);
+                showToast(`${product.name} 数量+1，已移至购物车顶部`);
+            } else {
+                // 新商品直接插入到最前面
+                const newItem = { ...product, quantity: 1 };
+                cart.unshift(newItem);
+                showToast(`${product.name} 已加入购物车（置顶显示）`);
+            }
+            saveCartAndSync();
+        }
+
+        // 渲染购物车（按照当前数组顺序展示，最新的在上面）
+        function renderCartPage() {
+            const container = document.getElementById('cart-items-list');
+            const summaryDiv = document.getElementById('cart-summary');
+            const emptyDiv = document.getElementById('empty-cart-message');
+            const cartContainerDiv = document.getElementById('cart-container');
+            
+            if(!container) return;
+            
+            if(cart.length === 0) {
+                container.innerHTML = '';
+                if(emptyDiv) emptyDiv.classList.remove('hidden');
+                if(summaryDiv) summaryDiv.classList.add('hidden');
+                if(cartContainerDiv) cartContainerDiv.classList.add('bg-transparent', 'shadow-none');
+                document.getElementById('total-items-count').innerText = '0';
+                document.getElementById('total-price').innerHTML = '¥0';
+                return;
+            }
+            if(emptyDiv) emptyDiv.classList.add('hidden');
+            if(summaryDiv) summaryDiv.classList.remove('hidden');
+            if(cartContainerDiv) cartContainerDiv.classList.remove('bg-transparent', 'shadow-none');
+            
+            let totalPrice = 0;
+            let totalItems = 0;
+            const itemsHtml = cart.map(item => {
+                const itemTotal = item.price * item.quantity;
+                totalPrice += itemTotal;
+                totalItems += item.quantity;
+                return `
+                    <div class="cart-item flex flex-col sm:flex-row gap-4 p-5 bg-white/40 hover:bg-white/60 transition">
+                        <img src="${item.image || 'https://picsum.photos/id/104/100/100'}" alt="${item.name}" class="w-24 h-24 rounded-xl object-cover shadow-sm">
+                        <div class="flex-1">
+                            <div class="flex justify-between flex-wrap">
+                                <h3 class="font-semibold text-lg">${escapeHtml(item.name)}</h3>
+                                <p class="text-[#B89C68] font-bold">¥${item.price}</p>
+                            </div>
+                            <div class="flex items-center gap-3 mt-3 flex-wrap">
+                                <div class="flex items-center border border-[#A9C3B2] rounded-full">
+                                    <button class="quantity-btn w-8 h-8 rounded-l-full hover:bg-[#A9C3B2]/30 text-lg" data-id="${item.id}" data-delta="-1">-</button>
+                                    <span class="w-10 text-center font-medium">${item.quantity}</span>
+                                    <button class="quantity-btn w-8 h-8 rounded-r-full hover:bg-[#A9C3B2]/30 text-lg" data-id="${item.id}" data-delta="1">+</button>
+                                </div>
+                                <button class="remove-item text-red-400 hover:text-red-600 text-sm flex items-center gap-1" data-id="${item.id}"><i class="fas fa-trash-alt"></i> 删除</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            container.innerHTML = itemsHtml;
+            document.getElementById('total-items-count').innerText = totalItems;
+            document.getElementById('total-price').innerHTML = `¥${totalPrice.toFixed(2)}`;
+            
+            // 绑定数量增减事件
+            document.querySelectorAll('.quantity-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    const delta = parseInt(btn.getAttribute('data-delta'));
+                    updateQuantity(id, delta);
+                });
+            });
+            document.querySelectorAll('.remove-item').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    removeItem(id);
+                });
+            });
+        }
+        
+        // 简单防XSS
+        function escapeHtml(str) {
+            return str.replace(/[&<>]/g, function(m) {
+                if(m === '&') return '&amp;';
+                if(m === '<') return '&lt;';
+                if(m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        // ---------- 优质苏绣推荐库 ----------
+const allRecommendProducts = [
+    { id: 1, name: '仕女蹴鞠图', price: 29800, image: './苏绣/仕女蹴鞠图.jpeg', category: '经典名画', tag: '姚建萍' },
+    { id: 2, name: '水乡之晨', price: 38000, image: './苏绣/姚惠芬-水乡之晨.JPG', category: '山水风景', tag: '姚惠芬' },
+    { id: 3, name: '千里江山图', price: 19800, image: './苏绣/千里江山图.jpg', category: '经典名画', tag: '姚建萍' },
+    { id: 4, name: '玉兰飘香', price: 29800, image: './苏绣/玉兰飘香.jpg', category: '花草雅韵', tag: '姚建萍' },
+    { id: 5, name: '新辉煌', price: 29800, image: './苏绣/新辉煌.jpg', category: '山水风景', tag: '姚建萍' },
+    { id: 6, name: '锦绣河山', price: 39800, image: './苏绣/锦绣河山.jpg', category: '山水风景', tag: '姚建萍' },
+    { id: 7, name: '《缠绕》小幅复刻', price: 80000, image: './苏绣/缠绕.jpeg', category: '花草雅韵', tag: '邹英姿' },
+    { id: 8, name: '鸿运当头', price: 42000, image: './苏绣/鸿运当头.jpg', category: '动物神韵', tag: '邹英姿' },
+    { id: 9, name: '凝视', price: 4980000, image: './苏绣/▲任嘒闲刺绣作品《凝视》.jpg', category: '人物风骨', tag: '任嘒闲' },
+    { id: 10, name: '中国皇后与皇子', price: 8333383, image: './苏绣/中国皇后与皇子.jpg', category: '人物风骨', tag: '朱寿珍' },
+    { id: 11, name: '玉兔呈祥', price: 80000, image: './苏绣/玉兔呈祥.jpeg', category: '动物神韵', tag: '邹英姿' },
+    { id: 12, name: '一团和气', price: 877828, image: './苏绣/一团和气.jpg', category: '人物风骨', tag: '朱寿珍' },
+    { id: 13, name: '红柿满枝图', price: 8900, image: './苏绣/红柿满枝图.jpg', category: '花草雅韵', tag: '姚建萍工作室' },
+    { id: 14, name: '耶稣像', price: 12000, image: './苏绣/沈寿作品《耶稣像》▲.jpg', category: '人物风骨', tag: '苏州镇湖精品仿品' },
+    { id: 15, name: '玳瑁猫', price: 168000, image: './苏绣/顾文霞作品《玳瑁猫》●.jpg', category: '动物神韵', tag: '顾文霞' },
+    { id: 16, name: '清奇古怪', price: 15800, image: './苏绣/《清奇古怪》▲.jpg', category: '山水风景', tag: '苏州绣娘' },
+    { id: 17, name: '狮王雄风', price: 200000, image: './苏绣/▲姚建萍苏绣作品——狮王雄风89x61cm,111x83cm.jpg', category: '动物神韵', tag: '姚建萍工作室' },
+    { id: 18, name: '蒙娜丽莎', price: 25000, image: './苏绣/蒙娜丽莎.webp', category: '人物风骨', tag: '姚建萍' },
+    { id: 19, name: '《父亲》复刻', price: 80000, image: './苏绣/父亲.webp', category: '人物风骨', tag: '姚建萍工作室' },
+    { id: 20, name: '姑苏繁华图', price: 28000, image: './苏绣/120.姑苏繁华图1.jpg', category: '经典名画', tag: '苏州刺绣研究所' },
+    { id: 21, name: '黄猫', price: 12800, image: './苏绣/黄猫-细绣-制作单位苏州刺绣研究所.JPG', category: '动物神韵', tag: '苏州刺绣研究所' },
+    { id: 22, name: '翩翩', price: 11500, image: './苏绣/翩翩-细绣-制作单位苏州刺绣研究所.jpg', category: '动物神韵', tag: '苏州刺绣研究所' },
+    { id: 23, name: '金色秋天', price: 16800, image: './苏绣/金色秋天-乱针绣-制作单位苏州刺绣研究所.jpg', category: '山水风景', tag: '苏州刺绣研究所' },
+    { id: 24, name: '彩墨荷塘', price: 18500, image: './苏绣/彩墨荷塘-乱针绣-制作单位苏州刺绣研究所.jpg', category: '山水风景', tag: '苏州刺绣研究所' }
+];
+        
+        // 推荐列表状态
+        let dismissedRecommendIds = JSON.parse(localStorage.getItem('suzhou_dismissed_rec')) || [];
+        let currentPriceLimit = 9999999;
+        
+        function saveDismissed() {
+            localStorage.setItem('suzhou_dismissed_rec', JSON.stringify(dismissedRecommendIds));
+        }
+        
+        function getFilteredRecommendations(priceMax) {
+            return allRecommendProducts.filter(prod => prod.price <= priceMax && !dismissedRecommendIds.includes(prod.id));
+        }
+        
+        function renderRecommendations() {
+            const container = document.getElementById('recommend-list');
+            const tipEl = document.getElementById('no-recommend-tip');
+            if(!container) return;
+            const filtered = getFilteredRecommendations(currentPriceLimit);
+            if(filtered.length === 0) {
+                container.innerHTML = '';
+                if(tipEl) tipEl.classList.remove('hidden');
+                return;
+            }
+            if(tipEl) tipEl.classList.add('hidden');
+            const recHtml = filtered.map(prod => `
+                <div class="recommend-card bg-white rounded-xl p-3 flex gap-3 shadow-sm border border-[#A9C3B2]/20" data-id="${prod.id}">
+                    <img src="${prod.image}" class="w-20 h-20 rounded-lg object-cover">
+                    <div class="flex-1">
+                        <div class="flex justify-between">
+                            <h4 class="font-semibold text-[#2F4B43]">${escapeHtml(prod.name)}</h4>
+                            <span class="text-[#B89C68] font-bold text-sm">¥${prod.price}</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">${prod.category} · ${prod.tag}</p>
+                        <div class="flex gap-2 mt-2">
+                            <button class="add-to-cart-rec text-xs bg-[#7EA08F] text-white px-3 py-1 rounded-full hover:bg-[#5c836e] transition btn-scale" data-id="${prod.id}" data-name="${prod.name}" data-price="${prod.price}" data-img="${prod.image}"><i class="fas fa-cart-plus mr-1"></i>加入购物车</button>
+                            <button class="dismiss-rec text-xs text-gray-400 hover:text-red-400 transition" data-id="${prod.id}"><i class="fas fa-times-circle"></i> 不感兴趣</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            container.innerHTML = recHtml;
+            
+            document.querySelectorAll('.add-to-cart-rec').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    const name = btn.getAttribute('data-name');
+                    const price = parseFloat(btn.getAttribute('data-price'));
+                    const image = btn.getAttribute('data-img');
+                    addToCartWithPriority({ id, name, price, image });
+                });
+            });
+            document.querySelectorAll('.dismiss-rec').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    if(!dismissedRecommendIds.includes(id)) {
+                        dismissedRecommendIds.push(id);
+                        saveDismissed();
+                        renderRecommendations();
+                        showToast(`已移除推荐`, false);
+                    }
+                });
+            });
+        }
+        
+        function resetRecommendations() {
+            dismissedRecommendIds = [];
+            saveDismissed();
+            renderRecommendations();
+            showToast(`已重置推荐列表`, false);
+        }
+        
+        function initPriceFilter() {
+            const slider = document.getElementById('price-filter');
+            const rangeVal = document.getElementById('price-range-value');
+            const applyBtn = document.getElementById('apply-price-filter');
+            if(slider) {
+                slider.addEventListener('input', (e) => {
+                    rangeVal.innerText = e.target.value;
+                });
+                applyBtn.addEventListener('click', () => {
+                    const val = parseInt(slider.value);
+                    currentPriceLimit = val;
+                    renderRecommendations();
+                    showToast(`筛选 ¥${val} 以下优质苏绣`, false);
+                });
+            }
+        }
+        
+        // 微信弹窗逻辑 (结账)
+        const modal = document.getElementById('wechat-modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        const mockPayBtn = document.getElementById('mock-pay-success');
+        
+function openWechatModal() {
+    if(cart.length === 0) {
+        showToast(`购物车为空，无法结算`, true);
+        return;
+    }
+    const total = cart.reduce((sum,item)=>sum+item.price*item.quantity,0);
+    const modalTotalSpan = document.getElementById('modal-total-amount');
+    modalTotalSpan.innerText = total.toLocaleString();
+    modal.classList.add('active');
+}
+        
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+        
+        function mockPaySuccess() {
+            if(cart.length === 0) {
+                closeModal();
+                showToast(`购物车已空`, true);
+                return;
+            }
+            const total = cart.reduce((sum,item)=>sum+item.price*item.quantity,0);
+            showToast(`支付成功！订单金额 ¥${total.toFixed(2)}，感谢您的雅藏 ❤️`, false);
+            // 清空购物车
+            cart = [];
+            saveCartAndSync();
+            closeModal();
+        }
+        
+        // UI初始化
+        function initUIComponents() {
+            const header = document.getElementById('main-header');
+            window.addEventListener('scroll', () => {
+                if(window.scrollY > 20) header.classList.add('navbar-scrolled');
+                else header.classList.remove('navbar-scrolled');
+            });
+            const menuBtn = document.getElementById('mobile-menu-btn');
+            const mobileNav = document.getElementById('mobile-nav');
+            if(menuBtn && mobileNav) {
+                menuBtn.addEventListener('click', () => {
+                    mobileNav.classList.toggle('open');
+                });
+            }
+            const clearCartBtn = document.getElementById('clear-cart-btn');
+            if(clearCartBtn) clearCartBtn.addEventListener('click', clearCart);
+            const checkoutBtn = document.getElementById('checkout-btn');
+            if(checkoutBtn) checkoutBtn.addEventListener('click', openWechatModal);
+            const resetRecBtn = document.getElementById('reset-recommend');
+            if(resetRecBtn) resetRecBtn.addEventListener('click', resetRecommendations);
+            if(closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+            if(mockPayBtn) mockPayBtn.addEventListener('click', mockPaySuccess);
+            modal.addEventListener('click', (e) => {
+                if(e.target === modal) closeModal();
+            });
+        }
+        
+        function init() {
+            renderCartPage();
+            initPriceFilter();
+            renderRecommendations();
+            initUIComponents();
+            updateCartBadge();
+        }
+        
+        init();
+    </script>
+    <!-- 苏绣雅集｜商城 & 购物车 AI 导购助手（最终优化版） -->
+<style>
+  #sxShopAi {
+    --sx-green: #2a7d5e;
+    --sx-green-dark: #22664c;
+    --sx-bg: #f6fbf8;
+    --sx-line: #e4efe8;
+    --sx-text: #24443a;
+
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 9999;
+    font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  }
+
+  #sxShopAi .sx-shop-toggle {
+    width: 62px;
+    height: 62px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--sx-green), #3da272);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(42, 125, 94, 0.28);
+    display: grid;
+    place-items: center;
+    transition: 0.2s ease;
+  }
+
+  #sxShopAi .sx-shop-toggle:hover {
+    transform: translateY(-2px);
+  }
+
+  #sxShopAi .sx-shop-panel {
+    position: absolute;
+    right: 0;
+    bottom: 76px;
+    width: min(92vw, 360px);
+    height: min(72vh, 520px);
+    background: #fff;
+    border: 1px solid var(--sx-line);
+    border-radius: 18px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+    overflow: hidden;
+    display: none;
+    flex-direction: column;
+  }
+
+  #sxShopAi.open .sx-shop-panel {
+    display: flex;
+    animation: sxFadeUp 0.18s ease-out;
+  }
+
+  @keyframes sxFadeUp {
+    from {opacity: 0;transform: translateY(10px) scale(0.98);}
+    to {opacity: 1;transform: translateY(0) scale(1);}
+  }
+
+  #sxShopAi .sx-shop-header {
+    padding: 12px 14px;
+    background: linear-gradient(135deg, var(--sx-green), #3da272);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  #sxShopAi .sx-shop-title {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  #sxShopAi .sx-shop-title strong {font-size: 15px;}
+  #sxShopAi .sx-shop-title span {font-size: 12px;opacity: 0.9;}
+  #sxShopAi .sx-shop-close {
+    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+  }
+  #sxShopAi .sx-shop-messages {flex: 1;padding: 12px;background: var(--sx-bg);overflow: auto;}
+  #sxShopAi .sx-shop-msg {
+    max-width: 86%;
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    line-height: 1.55;
+    font-size: 14px;
+    word-break: break-word;
+  }
+  #sxShopAi .sx-shop-bot {
+    background: #fff;
+    color: var(--sx-text);
+    border: 1px solid var(--sx-line);
+    border-top-left-radius: 6px;
+  }
+  #sxShopAi .sx-shop-user {
+    margin-left: auto;
+    background: rgba(42, 125, 94, 0.1);
+    color: var(--sx-green-dark);
+    border-top-right-radius: 6px;
+  }
+  #sxShopAi .sx-shop-quick {
+    padding: 10px 12px;
+    border-top: 1px solid var(--sx-line);
+    background: #fff;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  #sxShopAi .sx-shop-chip {
+    border: 1px solid rgba(42, 125, 94, 0.25);
+    background: #fff;
+    color: var(--sx-green-dark);
+    border-radius: 999px;
+    padding: 7px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.18s ease;
+  }
+  #sxShopAi .sx-shop-chip:hover {background: rgba(42, 125, 94, 0.08);}
+  #sxShopAi .sx-shop-inputbar {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--sx-line);
+    background: #fff;
+  }
+  #sxShopAi .sx-shop-input {
+    flex: 1;
+    border: 1px solid var(--sx-line);
+    border-radius: 10px;
+    padding: 9px 10px;
+    font-size: 13px;
+    outline: none;
+  }
+  #sxShopAi .sx-shop-send {
+    border: none;
+    background: var(--sx-green);
+    color: #fff;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #sxShopAi .sx-shop-send:hover {background: var(--sx-green-dark);}
+  @media (max-width: 480px) {
+    #sxShopAi {right: 12px;bottom: 12px;}
+    #sxShopAi .sx-shop-panel {width: min(94vw, 360px);height: min(74vh, 500px);}
+  }
+</style>
+
+<div id="sxShopAi">
+  <button class="sx-shop-toggle" type="button">AI</button>
+  <div class="sx-shop-panel">
+    <div class="sx-shop-header">
+      <div class="sx-shop-title">
+        <strong>苏绣AI导购助手</strong>
+        <span>作品推荐 · 购物帮助 · 活动联动</span>
+      </div>
+      <button class="sx-shop-close" type="button">×</button>
+    </div>
+    <div class="sx-shop-messages"></div>
+    <div class="sx-shop-quick">
+      <button class="sx-shop-chip" data-q="推荐热门苏绣作品">热门作品</button>
+      <button class="sx-shop-chip" data-q="推荐适合送礼的文创">送礼文创</button>
+      <button class="sx-shop-chip" data-q="根据购物车商品搭配推荐">搭配推荐</button>
+      <button class="sx-shop-chip" data-q="推荐近期苏绣展览活动">近期活动</button>
+      <button class="sx-shop-chip" data-q="怎么加购和结账">加购结账</button>
+    </div>
+    <div class="sx-shop-inputbar">
+      <input class="sx-shop-input" placeholder="输入问题，比如：适合送长辈的苏绣礼品">
+      <button class="sx-shop-send">发送</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const root = document.getElementById('sxShopAi');
+  if (!root) return;
+  const toggle = root.querySelector('.sx-shop-toggle');
+  const closeBtn = root.querySelector('.sx-shop-close');
+  const list = root.querySelector('.sx-shop-messages');
+  const input = root.querySelector('.sx-shop-input');
+  const sendBtn = root.querySelector('.sx-shop-send');
+  const chips = root.querySelectorAll('.sx-shop-chip');
+
+  const welcome = [
+    '你好～我是苏绣商城助手，可以帮你推荐作品、文创礼品、活动信息，解答购物流程。',
+    '可查询：热门绣品、送礼选择、购物车搭配、展览预约、下单结账。'
+  ];
+
+  function openPanel(){root.classList.add('open');}
+  function closePanel(){root.classList.remove('open');}
+  function scrollBottom(){list.scrollTop = list.scrollHeight;}
+  function addMsg(text,role='bot'){
+    const div=document.createElement('div');
+    div.className=`sx-shop-msg sx-shop-${role}`;
+    div.textContent=text;
+    list.appendChild(div);
+    scrollBottom();
+  }
+  function normalize(s){return String(s||'').trim();}
+  function answer(q){
+    const text=normalize(q);
+    if(/(热门|作品|爆款)/.test(text)){
+      return '热门推荐：千里江山图系列、双面绣螳螂猫、花鸟山水绣品、经典团扇摆件，工艺精湛，收藏价值高。';
+    }
+    if(/(送礼|文创|长辈|朋友)/.test(text)){
+      return '送礼优选：苏绣书签、古风团扇、小型屏风、花鸟文创小件，国风雅致，兼具实用性与非遗纪念意义。';
+    }
+    if(/(购物车|搭配)/.test(text)){
+      return '搭配建议：山水类绣品可搭配同风格文创，花鸟作品适配古风配饰摆件，风格统一提升收藏质感。';
+    }
+    if(/(活动|展览|动态|预约)/.test(text)){
+      return '近期展览活动可在【有关动态】页面查看，支持活动收藏、线上预约，实时了解苏绣文化展览资讯。';
+    }
+    if(/(加购|结账|支付)/.test(text)){
+      return '购物流程：点击商品加入购物车，可增减数量、删除商品，确认订单后微信扫码完成支付，操作简单便捷。';
+    }
+    return '你可以咨询：热门作品推荐、文创送礼、购物车搭配、展览活动、下单操作等问题。';
+  }
+  function botReply(q){addMsg(normalize(q),'user');setTimeout(()=>addMsg(answer(q),'bot'),180);}
+  toggle.addEventListener('click',()=>root.classList.contains('open')?closePanel():openPanel());
+  closeBtn.addEventListener('click',closePanel);
+  chips.forEach(btn=>btn.addEventListener('click',()=>botReply(btn.dataset.q)));
+  sendBtn.addEventListener('click',()=>{const t=normalize(input.value);if(!t)return;input.value='';botReply(t);});
+  input.addEventListener('keydown',e=>e.key==='Enter'&&sendBtn.click());
+  document.addEventListener('click',e=>{if(!root.contains(e.target))closePanel();});
+  document.addEventListener('keydown',e=>e.key==='Escape'&&closePanel());
+  welcome.forEach(t=>addMsg(t,'bot'));
+})();
+</script>
+</body>
+</html>
